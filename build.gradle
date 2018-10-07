@@ -11,7 +11,7 @@ allprojects {
 
     version = '1.0'
     ext {
-        libName = "Common"
+        libName = "commons"
         gdxVersion = '1.9.7'
         roboVMVersion = '2.3.1'
         box2DLightsVersion = '1.4'
@@ -21,23 +21,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-    }
-}
-
-project(":annotations") {
-    apply plugin: "java"
-	
-    dependencies {
-        compile project(":core")
-    }
-}
-
-project(":core") {
-    apply plugin: "java"
-    
-    dependencies {
-        compile "com.badlogicgames.gdx:gdx:$gdxVersion"
-		compile "com.github.czyzby:gdx-lml:1.9.1.9.6" 
     }
 }
 

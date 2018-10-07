@@ -5,7 +5,11 @@ sourceCompatibility = 1.8
 
 sourceSets.main.java.srcDirs = [ "src/" ]
 
+dependencies {
+	compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+	compile "com.github.czyzby:gdx-lml:1.9.1.9.6" 
+}
 
 eclipse.project {
-    name = libName + "-common"
+    name = libName + "-core"
 }
