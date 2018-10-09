@@ -6,7 +6,11 @@ sourceCompatibility = 1.8
 sourceSets.main.java.srcDirs = [ "src/" ]
 
 dependencies {
-	compile project(':commons:core')
+	if(projectDir.getParentFile().equals(rootDir)) {
+    	compile project(':core')
+    } else {
+    	compile project(':'+projectDir.getParentFile().name+':core')
+    }
 }
 
 eclipse.project {
