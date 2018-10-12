@@ -57,7 +57,8 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
 
     public void addScene(Scene scene) {
         synchronized (sceneStack) {
-            input.addProcessor(0, scene.getInput());
+            if (scene.getInput() != null)
+                input.addProcessor(0, scene.getInput());
             sceneStack.push(scene);
             scene.show();
             scene.resize(w, h);
@@ -66,7 +67,8 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
 
     public void addSceneBelow(Scene scene) {
         synchronized (sceneStack) {
-            input.addProcessor(1, scene.getInput());
+            if (scene.getInput() != null)
+                input.addProcessor(1, scene.getInput());
             sceneStack.add(Math.max(0, sceneStack.size() - 1), scene);
             scene.show();
             scene.resize(w, h);
@@ -77,7 +79,8 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
         synchronized (sceneStack) {
             scene.hide();
             boolean res = sceneStack.remove(scene);
-            input.removeProcessor(scene.getInput());
+            if (scene.getInput() != null)
+                input.removeProcessor(scene.getInput());
             return res;
         }
     }
