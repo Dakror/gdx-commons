@@ -128,6 +128,10 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
     }
 
     public void update(float deltaTime) {
+        // discard frame
+        if (deltaTime > 0.5) {
+            return;
+        }
         synchronized (sceneStack) {
             try {
                 for (int i = sceneStack.size() - 1; i > -1; i--)
