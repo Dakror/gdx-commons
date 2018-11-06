@@ -24,5 +24,5 @@ public interface PlatformInterface {
     public static final int MSG_EXCEPTION = 0x1;
     public static final int MSG_BROWSER_INTENT = 0x2;
 
-    public void message(int messageCode, Object payload);
+    public Object message(int messageCode, Object payload);
 }
