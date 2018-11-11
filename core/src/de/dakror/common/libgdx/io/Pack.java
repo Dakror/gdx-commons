@@ -79,6 +79,10 @@ public class Pack implements Poolable {
         return (String) get(key);
     }
 
+    public byte[] getBytes(String key) {
+        return (byte[]) get(key);
+    }
+
     @Override
     public String toString() {
         return map.toString();
