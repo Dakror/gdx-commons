@@ -17,6 +17,7 @@
 package de.dakror.common.libgdx.io;
 
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.GZIPInputStream;
@@ -30,8 +31,12 @@ public class IOUtils {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buf = new byte[32000];
         int len = 0;
-        while ((len = gz.read(buf)) != -1) {
-            baos.write(buf, 0, len);
+        try {
+            while ((len = gz.read(buf)) != -1) {
+                baos.write(buf, 0, len);
+            }
+        } catch (EOFException e) {
+            e.printStackTrace();
         }
         gz.close();
         return baos.toByteArray();
