@@ -83,6 +83,10 @@ public class Pack implements Poolable {
         return (byte[]) get(key);
     }
 
+    public String[] keys() {
+        return map.keys().toArray().toArray();
+    }
+
     @Override
     public String toString() {
         return map.toString();
