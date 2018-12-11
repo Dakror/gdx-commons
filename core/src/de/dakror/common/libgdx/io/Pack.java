@@ -84,7 +84,7 @@ public class Pack implements Poolable {
     }
 
     public String[] keys() {
-        return map.keys().toArray().toArray();
+        return map.keys().toArray().toArray(String.class);
     }
 
     @Override
