@@ -16,6 +16,8 @@
 
 package de.dakror.common.libgdx;
 
+import java.util.Objects;
+
 import com.badlogic.gdx.utils.Pool.Poolable;
 
 /**
@@ -45,5 +47,19 @@ public class Pair<K, V> implements Poolable {
     public void reset() {
         key = null;
         val = null;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Pair) {
+            return (key == ((Pair<?, ?>) obj).key || key.equals(((Pair<?, ?>) obj).key))
+                    && (val == ((Pair<?, ?>) obj).val || val.equals(((Pair<?, ?>) obj).val));
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, val);
     }
 }
