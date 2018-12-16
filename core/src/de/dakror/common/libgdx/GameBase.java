@@ -136,7 +136,9 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
             try {
                 for (int i = sceneStack.size() - 1; i > -1; i--)
                     sceneStack.get(i).update(deltaTime);
-            } catch (ArrayIndexOutOfBoundsException e) {}
+            } catch (ArrayIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
         }
     }
 
