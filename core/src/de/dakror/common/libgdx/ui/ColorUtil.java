@@ -49,8 +49,7 @@ public class ColorUtil {
 
         if (l < 0.5)
             q = l * (1 + s);
-        else
-            q = (l + s) - (s * l);
+        else q = (l + s) - (s * l);
 
         float p = 2 * l - q;
 
@@ -117,35 +116,35 @@ public class ColorUtil {
         q = v * (1 - s * f);
         t = v * (1 - s * (1 - f));
         switch (i) {
-        case 0:
-            r = Math.round(255 * v);
-            g = Math.round(255 * t);
-            b = Math.round(255 * p);
-            break;
-        case 1:
-            r = Math.round(255 * q);
-            g = Math.round(255 * v);
-            b = Math.round(255 * p);
-            break;
-        case 2:
-            r = Math.round(255 * p);
-            g = Math.round(255 * v);
-            b = Math.round(255 * t);
-            break;
-        case 3:
-            r = Math.round(255 * p);
-            g = Math.round(255 * q);
-            b = Math.round(255 * v);
-            break;
-        case 4:
-            r = Math.round(255 * t);
-            g = Math.round(255 * p);
-            b = Math.round(255 * v);
-            break;
-        default:
-            r = Math.round(255 * v);
-            g = Math.round(255 * p);
-            b = Math.round(255 * q);
+            case 0:
+                r = Math.round(255 * v);
+                g = Math.round(255 * t);
+                b = Math.round(255 * p);
+                break;
+            case 1:
+                r = Math.round(255 * q);
+                g = Math.round(255 * v);
+                b = Math.round(255 * p);
+                break;
+            case 2:
+                r = Math.round(255 * p);
+                g = Math.round(255 * v);
+                b = Math.round(255 * t);
+                break;
+            case 3:
+                r = Math.round(255 * p);
+                g = Math.round(255 * q);
+                b = Math.round(255 * v);
+                break;
+            case 4:
+                r = Math.round(255 * t);
+                g = Math.round(255 * p);
+                b = Math.round(255 * v);
+                break;
+            default:
+                r = Math.round(255 * v);
+                g = Math.round(255 * p);
+                b = Math.round(255 * q);
         }
 
         return new Color(r / 255.0f, g / 255.0f, b / 255.0f, 1);
