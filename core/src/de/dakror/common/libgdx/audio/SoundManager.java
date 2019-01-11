@@ -47,31 +47,51 @@ public class SoundManager {
 
     boolean playMusic;
     boolean playSound;
-    
+
     float fadeSpeed;
-    
-    public SoundManager(float fadeSpeed) {
+    float soundVolume;
+    float musicVolume;
+
+    public SoundManager(float soundVolume, float musicVolume, float fadeSpeed) {
         this.fadeSpeed = fadeSpeed;
+        this.soundVolume = soundVolume;
+        this.musicVolume = musicVolume;
     }
-    
+
+    public void setMusicVolume(float musicVolume) {
+        this.musicVolume = musicVolume;
+    }
+
+    public void setSoundVolume(float soundVolume) {
+        this.soundVolume = soundVolume;
+    }
+
     public void setFadeSpeed(float fadeSpeed) {
         this.fadeSpeed = fadeSpeed;
     }
-    
+
     public void setPlayMusic(boolean playMusic) {
         this.playMusic = playMusic;
+    }
+
+    public boolean isPlayMusic() {
+        return playMusic;
     }
     
     public void setPlaySound(boolean playSound) {
         this.playSound = playSound;
     }
     
+    public boolean isPlaySound() {
+        return playSound;
+    }
+
     public void update(float delta) {
         for (Iterator<SoundEntry> iter = queue.iterator(); iter.hasNext();) {
             SoundEntry e = iter.next();
             e.delay -= delta;
             if (e.delay <= 0) {
-                if (playSound) e.id = e.sound.play();
+                if (playSound) e.id = e.sound.play(soundVolume);
                 if (e.callback != null) e.callback.call(e);
                 iter.remove();
             }
@@ -80,11 +100,11 @@ public class SoundManager {
         if (fadeProgress > -1) {
             fadeProgress += delta * fadeSpeed;
             if (newMusic != null) {
-                newMusic.setVolume(Math.min(1, fadeProgress));
-                music.setVolume(1 - Math.min(1, fadeProgress));
+                newMusic.setVolume(musicVolume * Math.min(1, fadeProgress));
+                music.setVolume(musicVolume * (1 - Math.min(1, fadeProgress)));
             } else {
-                if (fadeOutMusic) music.setVolume(1 - Math.min(1, fadeProgress));
-                else music.setVolume(Math.min(1, fadeProgress));
+                if (fadeOutMusic) music.setVolume(musicVolume * (1 - Math.min(1, fadeProgress)));
+                else music.setVolume(musicVolume * Math.min(1, fadeProgress));
             }
 
             if (fadeProgress >= 1) {
@@ -106,11 +126,11 @@ public class SoundManager {
             }
         }
 
-        if (!fadeOutMusic && music != null && music.isPlaying() && !playMusic && lastTickMusic) {
+        if (!fadeOutMusic && music != null && !playMusic && lastTickMusic && music.isPlaying()) {
             pauseMusic();
         }
 
-        if (music != null && !music.isPlaying() && playMusic && !lastTickMusic) {
+        if (music != null && playMusic && !lastTickMusic && !music.isPlaying()) {
             resumeMusic();
         }
 
@@ -147,7 +167,7 @@ public class SoundManager {
         fadeOutMusic = false;
         pauseMusic = false;
         fadeProgress = -1;
-        music.setVolume(1);
+        music.setVolume(musicVolume);
         if (music.isPlaying()) return;
 
         Music m = music;
@@ -191,6 +211,7 @@ public class SoundManager {
             music.stop();
             music = newMusic;
             newMusic.setLooping(true);
+            newMusic.setVolume(musicVolume);
             newMusic.play();
             fadeProgress = -1;
         }
