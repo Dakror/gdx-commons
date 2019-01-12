@@ -31,8 +31,11 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import com.badlogic.gdx.utils.Pool.Poolable;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.utils.Pools;
 
 import de.dakror.common.GCLog;
@@ -1147,16 +1150,36 @@ public class NBT extends GCLog {
     }
 
     protected CompoundTag readFile(InputStream is, boolean compressed) throws IOException {
-        if (compressed) {
-            is = new LZ4FrameInputStream(is, LZ4Factory.fastestInstance().safeDecompressor(), 
-                    XXHashFactory.safeInstance().hash32());
-        }
+        InputStream stream = is;
+        is.mark(Integer.MAX_VALUE);
+        try {
 
-        input = new DataInputStream(is);
-        CompoundTag t = readTag(true, CompoundTag.class);
-        is.close();
-        input = null;
-        return t;
+            if (compressed) {
+                if (Gdx.app.getType() == ApplicationType.Desktop)
+                    stream = new LZ4FrameInputStream(is);
+                else
+                    stream = new LZ4FrameInputStream(is, LZ4Factory.fastestInstance().safeDecompressor(),
+                            XXHashFactory.safeInstance().hash32());
+            }
+
+            input = new DataInputStream(stream);
+            CompoundTag t = readTag(true, CompoundTag.class);
+            return t;
+        } catch (IOException e) {
+            stream = is;
+            is.reset();
+
+            // try gzip, maybe file format is old
+            if (compressed) {
+                stream = new GZIPInputStream(is);
+            }
+
+            input = new DataInputStream(stream);
+            CompoundTag t = readTag(true, CompoundTag.class);
+            return t;
+        } finally {
+            is.close();
+        }
     }
 
     //////////////////////////////////////////
@@ -1242,7 +1265,10 @@ public class NBT extends GCLog {
 
     protected void writeFile(OutputStream os, CompoundTag data, boolean compressed) throws IOException {
         if (compressed) {
-            os = new LZ4FrameOutputStream(os, BLOCKSIZE.SIZE_4MB, 1, LZ4Factory.safeInstance().fastCompressor(),
+            if (Gdx.app.getType() == ApplicationType.Desktop)
+                os = new LZ4FrameOutputStream(os);
+            else
+                os = new LZ4FrameOutputStream(os, BLOCKSIZE.SIZE_4MB, -1L, LZ4Factory.safeInstance().fastCompressor(),
                     XXHashFactory.safeInstance().hash32(), FLG.Bits.BLOCK_INDEPENDENCE);
         }
 
