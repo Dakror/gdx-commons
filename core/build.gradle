@@ -7,7 +7,9 @@ sourceSets.main.java.srcDirs = [ "src/" ]
 
 dependencies {
 	compile "com.badlogicgames.gdx:gdx:$gdxVersion"
-	compile "com.github.czyzby:gdx-lml:1.9.1.9.6" 
+	compile "com.github.czyzby:gdx-lml:1.9.1.9.6"
+
+	implementation 'org.lz4:lz4-java:1.5.0'
 }
 
 eclipse.project {

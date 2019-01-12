@@ -16,32 +16,10 @@
 
 package de.dakror.common.libgdx.io;
 
-import java.io.ByteArrayOutputStream;
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.zip.GZIPInputStream;
-
 /**
  * @author Maximilian Stark | Dakror
  */
 public class IOUtils {
-    public static byte[] gunzip(InputStream is) throws IOException {
-        GZIPInputStream gz = new GZIPInputStream(is);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buf = new byte[32000];
-        int len = 0;
-        try {
-            while ((len = gz.read(buf)) != -1) {
-                baos.write(buf, 0, len);
-            }
-        } catch (EOFException e) {
-            e.printStackTrace();
-        }
-        gz.close();
-        return baos.toByteArray();
-    }
-
     public static byte[] twiddleBoolArray(boolean[] array) {
         int len = (int) Math.ceil(array.length / 8f);
         byte[] data = new byte[len];

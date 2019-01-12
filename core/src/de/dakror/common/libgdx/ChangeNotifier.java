@@ -28,7 +28,7 @@ import de.dakror.common.libgdx.ChangeNotifier.Event.Type;
  */
 public class ChangeNotifier<T> extends GCLog {
     public static class Event<T> implements Poolable {
-        public static enum Type {
+        public enum Type {
             ADD,
             REMOVE,
             CHANGE,
@@ -70,7 +70,7 @@ public class ChangeNotifier<T> extends GCLog {
         }
     };
 
-    public static interface Listener<T> {
+    public interface Listener<T> {
         void onChangeEvent(Event<T> event);
     }
 

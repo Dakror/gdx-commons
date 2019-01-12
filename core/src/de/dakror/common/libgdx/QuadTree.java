@@ -35,7 +35,7 @@ public class QuadTree<T extends Region> {
     public static int maxNodes = 5;
     public static int maxLevel = 10;
 
-    public static interface Region {
+    public interface Region {
         int getX();
 
         int getY();
