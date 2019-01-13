@@ -24,9 +24,9 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.WindowedMean;
 
 import de.dakror.common.libgdx.ui.Scene;
 
@@ -41,7 +41,11 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
 
     int w, h;
 
-    FPSLogger fps = new FPSLogger();
+    protected final WindowedMean upsWindow = new WindowedMean(10);
+    long lastUps;
+    float ups;
+
+    protected float updateRate = 1 / 60f;
 
     public GameBase(PlatformInterface pi) {
         this.pi = pi;
@@ -127,15 +131,11 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
         }
     }
 
-    public void update(float deltaTime) {
-        // discard frame
-        if (deltaTime > 0.5) {
-            return;
-        }
+    public void update() {
         synchronized (sceneStack) {
             try {
                 for (int i = sceneStack.size() - 1; i > -1; i--)
-                    sceneStack.get(i).update(deltaTime);
+                    sceneStack.get(i).update(updateRate);
             } catch (ArrayIndexOutOfBoundsException e) {
                 e.printStackTrace();
             }
@@ -145,14 +145,14 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
     @Override
     public void render() {
         synchronized (sceneStack) {
-            float deltaTime = Gdx.graphics.getDeltaTime();
-            update(deltaTime);
+            long t = System.nanoTime();
+            update();
+            upsWindow.addValue(System.nanoTime() - t);
 
+            float deltaTime = Gdx.graphics.getDeltaTime();
             Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
             for (Scene scene : sceneStack)
                 scene.draw(deltaTime);
-
-            //            fps.log();
         }
     }
 
@@ -247,4 +247,11 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
         return false;
     }
 
+    public float getUPS() {
+        if(System.currentTimeMillis() - lastUps > 1000) {
+            ups = upsWindow.getMean() / 1_000_000f;
+            lastUps = System.currentTimeMillis();
+        }
+        return ups;
+    }
 }
