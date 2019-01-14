@@ -41,9 +41,12 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
 
     int w, h;
 
-    protected final WindowedMean upsWindow = new WindowedMean(10);
-    long lastUps;
-    float ups;
+    protected final WindowedMean updateTimeWindow = new WindowedMean(10);
+    protected final WindowedMean frameTimeWindow = new WindowedMean(10);
+    long lastUpdateTime;
+    float updateTime;
+    long lastFrameTime;
+    float frameTime;
 
     protected float updateRate = 1 / 60f;
 
@@ -147,12 +150,14 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
         synchronized (sceneStack) {
             long t = System.nanoTime();
             update();
-            upsWindow.addValue(System.nanoTime() - t);
+            updateTimeWindow.addValue(System.nanoTime() - t);
 
+            t = System.nanoTime();
             float deltaTime = Gdx.graphics.getDeltaTime();
             Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
             for (Scene scene : sceneStack)
                 scene.draw(deltaTime);
+            frameTimeWindow.addValue(System.nanoTime() - t);
         }
     }
 
@@ -247,11 +252,19 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
         return false;
     }
 
-    public float getUPS() {
-        if(System.currentTimeMillis() - lastUps > 1000) {
-            ups = upsWindow.getMean() / 1_000_000f;
-            lastUps = System.currentTimeMillis();
+    public float getUpdateTime() {
+        if (System.currentTimeMillis() - lastUpdateTime > 1000) {
+            updateTime = updateTimeWindow.getMean() / 1_000_000f;
+            lastUpdateTime = System.currentTimeMillis();
         }
-        return ups;
+        return updateTime;
+    }
+
+    public float getFrameTime() {
+        if (System.currentTimeMillis() - lastFrameTime > 1000) {
+            frameTime = frameTimeWindow.getMean() / 1_000_000f;
+            lastFrameTime = System.currentTimeMillis();
+        }
+        return frameTime;
     }
 }
