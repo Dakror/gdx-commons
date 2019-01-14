@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright 2017 Maximilian Stark | Dakror <mail@dakror.de>
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,6 +15,9 @@
  ******************************************************************************/
 
 package de.dakror.common.libgdx.io;
+
+import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.xxhash.XXHashFactory;
 
 /**
  * @author Maximilian Stark | Dakror
@@ -33,5 +36,21 @@ public class IOUtils {
         for (int i = 0; i < bools.length; i++)
             bools[i] = (data[i / 8] & (1 << (i % 8))) != 0;
         return bools;
+    }
+
+    public static LZ4Factory getLZ4() {
+        LZ4Factory nativ = LZ4Factory.nativeInstance();
+        if (nativ != null) return nativ;
+
+        // android does not support all of sun.misc.Unsafe
+        return LZ4Factory.safeInstance();
+    }
+
+    public static XXHashFactory getXXHash() {
+        XXHashFactory nativ = XXHashFactory.nativeInstance();
+        if (nativ != null) return nativ;
+
+        // android does not support all of sun.misc.Unsafe
+        return XXHashFactory.safeInstance();
     }
 }
