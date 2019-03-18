@@ -74,6 +74,8 @@ public abstract class EditorCameraControl extends InputAdapter {
 
         if (isActiveElementEnabled() && isWithinActiveElement(tileX, tileY)) {
             canPan = false;
+            dragX = x;
+            dragY = y;
             setParamRawPosition(activeElementPos, tileX, tileY);
             return true;
         }
@@ -205,6 +207,10 @@ public abstract class EditorCameraControl extends InputAdapter {
     }
 
     protected abstract void clampCam(OrthographicCamera cam);
+
+    public boolean isDragging() {
+        return dragX > -1;
+    }
 
     public void update() {
         if (cameraChanged) {
