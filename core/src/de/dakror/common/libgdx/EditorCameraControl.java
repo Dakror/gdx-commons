@@ -72,7 +72,7 @@ public abstract class EditorCameraControl extends InputAdapter {
         int tileX = (int) (tmp.x / tileSize);
         int tileY = (int) (tmp.y / tileSize);
 
-        if (isActiveElementEnabled() && isWithinActiveElement(tileX, tileY)) {
+        if (isActiveElementEnabled() && isWithinActiveElement((int) tmp.x, (int) tmp.y, tileX, tileY)) {
             canPan = false;
             dragX = x;
             dragY = y;
@@ -83,7 +83,7 @@ public abstract class EditorCameraControl extends InputAdapter {
         return false;
     }
 
-    protected abstract boolean isWithinActiveElement(int tileX, int tileY);
+    protected abstract boolean isWithinActiveElement(int x, int y, int tileX, int tileY);
 
     protected abstract void setParamRawPosition(Vector2 rawPosition, int tileX, int tileY);
 
@@ -94,7 +94,7 @@ public abstract class EditorCameraControl extends InputAdapter {
         int tileY = (int) (tmp.y / tileSize);
 
         updateActiveElementPlaceable();
-        if (elementPlaceable && isWithinActiveElement(tileX, tileY) && isActiveElementEnabled()) {
+        if (elementPlaceable && isWithinActiveElement((int) tmp.x, (int) tmp.y, tileX, tileY) && isActiveElementEnabled()) {
             placeActiveElement();
 
             // for a next placement
