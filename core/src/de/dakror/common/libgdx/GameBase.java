@@ -24,6 +24,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.WindowedMean;
@@ -50,8 +51,17 @@ public abstract class GameBase extends ApplicationAdapter implements InputProces
 
     protected float updateRate = 1 / 60f;
 
+    protected GestureDetector gd;
+
     public GameBase(PlatformInterface pi) {
         this.pi = pi;
+    }
+
+    @Override
+    public void create() {
+        gd = new GestureDetector(this);
+        input = new InputMultiplexer(this, gd);
+        Gdx.input.setInputProcessor(input);
     }
 
     public Scene getScene() {
