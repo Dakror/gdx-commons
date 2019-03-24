@@ -76,7 +76,7 @@ public abstract class EditorCameraControl extends InputAdapter {
             canPan = false;
             dragX = x;
             dragY = y;
-            setParamRawPosition(activeElementPos, tileX, tileY);
+            setParamRawPosition(activeElementPos, (int) tmp.x, (int) tmp.y, tileX, tileY);
             return true;
         }
 
@@ -85,7 +85,7 @@ public abstract class EditorCameraControl extends InputAdapter {
 
     protected abstract boolean isWithinActiveElement(int x, int y, int tileX, int tileY);
 
-    protected abstract void setParamRawPosition(Vector2 rawPosition, int tileX, int tileY);
+    protected abstract void setParamRawPosition(Vector2 rawPosition, int x, int y, int tileX, int tileY);
 
     @Override
     public boolean tap(float x, float y, int count, int button) {
@@ -101,7 +101,7 @@ public abstract class EditorCameraControl extends InputAdapter {
             updateActiveElementPlaceable();
             return true;
         } else if (handleInitialPlacement(tileX, tileY)) {
-            setParamRawPosition(activeElementPos, tileX, tileY);
+            setParamRawPosition(activeElementPos, (int) tmp.x, (int) tmp.y, tileX, tileY);
             updateActiveElementPlaceable();
             return true;
         } else return handleTap(tileX, tileY);
