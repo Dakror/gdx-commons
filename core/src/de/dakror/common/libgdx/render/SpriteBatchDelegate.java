@@ -58,6 +58,11 @@ public class SpriteBatchDelegate extends GCLog implements SpriteRenderer {
         batch.draw(atlas, x, y, width, height, u, v, u2, v2);
     }
 
+    @Override
+    public void flush() {
+        batch.flush();
+    }
+
     public SpriteBatch getBatch() {
         return batch;
     }

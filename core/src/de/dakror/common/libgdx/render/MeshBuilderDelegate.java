@@ -255,6 +255,10 @@ public class MeshBuilderDelegate implements SpriteRenderer {
 
         builder.rect(set(vertTmp1, x1, y1, z, u, v), set(vertTmp2, x2, y2, z, u, v2), set(vertTmp3, x3, y3, z, u2, v2), set(vertTmp4, x4, y4, z, u2, v));
     }
+    
+    @Override
+    public void flush() {   
+    }
 
     @Override
     public ShaderProgram getShader() {
