@@ -206,7 +206,7 @@ public abstract class EditorCameraControl extends InputAdapter {
         cameraChanged = true;
     }
 
-    protected abstract void clampCam(OrthographicCamera cam);
+    public abstract void clampCam(OrthographicCamera cam);
 
     public boolean isDragging() {
         return dragX > -1;
