@@ -26,10 +26,10 @@ public abstract class Scene {
             alpha = Math.max(0, alpha - deltaTime * 4); // fadeIn time: 0.25s
         }
         if (stage != null)
-            stage.act();
+            stage.act(deltaTime);
     }
 
-    public void draw(float deltaTime) {
+    public void draw() {
         if (stage != null) {
             if (alpha == 1) stage.draw();
             else if (alpha != 0) {

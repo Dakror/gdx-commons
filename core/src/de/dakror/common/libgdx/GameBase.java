@@ -47,6 +47,8 @@ public abstract class GameBase extends ApplicationAdapter {
 
     protected float updateRate = 1 / 60f;
 
+    double currentTime;
+
     public GameBase(PlatformInterface pi) {
         this.pi = pi;
     }
@@ -55,6 +57,7 @@ public abstract class GameBase extends ApplicationAdapter {
     public void create() {
         input = new InputMultiplexer();
         Gdx.input.setInputProcessor(input);
+        currentTime = System.nanoTime() / 1_000_000_000.0;
     }
 
     public Scene getScene() {
@@ -138,13 +141,22 @@ public abstract class GameBase extends ApplicationAdapter {
     }
 
     public void update() {
-        synchronized (sceneStack) {
-            try {
-                for (int i = sceneStack.size() - 1; i > -1; i--)
-                    sceneStack.get(i).update(updateRate);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
+        double newTime = System.nanoTime() / 1_000_000_000.0;
+        double frameTime = newTime - currentTime;
+        currentTime = newTime;
+
+        while (frameTime > 0.0) {
+            float deltaTime = (float) Math.min(frameTime, updateRate);
+            synchronized (sceneStack) {
+                try {
+                    for (int i = sceneStack.size() - 1; i > -1; i--)
+                        sceneStack.get(i).update(deltaTime);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
             }
+
+            frameTime -= deltaTime;
         }
     }
 
@@ -156,10 +168,9 @@ public abstract class GameBase extends ApplicationAdapter {
             updateTimeWindow.addValue(System.nanoTime() - t);
 
             t = System.nanoTime();
-            float deltaTime = Gdx.graphics.getDeltaTime();
             Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
             for (Scene scene : sceneStack)
-                scene.draw(deltaTime);
+                scene.draw();
             frameTimeWindow.addValue(System.nanoTime() - t);
         }
     }
