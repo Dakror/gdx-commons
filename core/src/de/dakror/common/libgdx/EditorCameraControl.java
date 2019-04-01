@@ -136,8 +136,8 @@ public abstract class EditorCameraControl extends InputAdapter {
             if (canPan) {
                 cam.translate(dX, dY);
 
-                cam.position.x = MathUtils.round(cam.position.x);
-                cam.position.y = MathUtils.round(cam.position.y);
+                cam.position.x = cam.position.x;
+                cam.position.y = cam.position.y;
 
                 cameraChanged = true;
             } else if (isActiveElementEnabled()) {
