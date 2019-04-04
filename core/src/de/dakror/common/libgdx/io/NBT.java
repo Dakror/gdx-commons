@@ -16,18 +16,6 @@
 
 package de.dakror.common.libgdx.io;
 
-import com.badlogic.gdx.Application.ApplicationType;
-import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Pool.Poolable;
-import com.badlogic.gdx.utils.Pools;
-
-import net.jpountz.lz4.LZ4Factory;
-import net.jpountz.lz4.LZ4FrameInputStream;
-import net.jpountz.lz4.LZ4FrameOutputStream;
-import net.jpountz.lz4.LZ4FrameOutputStream.BLOCKSIZE;
-import net.jpountz.lz4.LZ4FrameOutputStream.FLG;
-import net.jpountz.xxhash.XXHashFactory;
-
 import java.io.BufferedReader;
 import java.io.DataInput;
 import java.io.DataInputStream;
@@ -45,7 +33,17 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
+import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.Pool.Poolable;
+import com.badlogic.gdx.utils.Pools;
+
 import de.dakror.common.GCLog;
+import net.jpountz.lz4.LZ4FrameInputStream;
+import net.jpountz.lz4.LZ4FrameOutputStream;
+import net.jpountz.lz4.LZ4FrameOutputStream.BLOCKSIZE;
+import net.jpountz.lz4.LZ4FrameOutputStream.FLG;
 
 /**
  * @author Maximilian Stark | Dakror
@@ -413,6 +411,17 @@ public class NBT extends GCLog {
         }
 
         public abstract void add(Tag tag);
+
+        protected abstract Array<Tag> getChildren(String querySelector);
+
+        public Array<Tag> query(String queryString) {
+            String[] parts = queryString.split(" ");
+            Array<Tag> results = new Array<>();
+
+            // TODO
+
+            return results;
+        }
     }
 
     public static class ListTag extends CollectionTag {
@@ -473,6 +482,11 @@ public class NBT extends GCLog {
             if (tag.type != elementType)
                 throw new RuntimeException("Incompatible Tag Types in List Tag, wanted \"" + elementType + "\", got \"" + tag.type + "\"");
             data.add(tag);
+        }
+
+        @Override
+        protected Array<Tag> getChildren(String querySelector) {
+            return null;
         }
     }
 
@@ -707,6 +721,11 @@ public class NBT extends GCLog {
             if (tag.type != type)
                 throw new NBTException("Invalid tag type! Expected \"" + type + "\", got \"" + tag.type + "\"");
             return tag;
+        }
+
+        @Override
+        protected Array<Tag> getChildren(java.lang.String querySelector) {
+            return null;
         }
 
     }
@@ -1016,8 +1035,7 @@ public class NBT extends GCLog {
     protected DataInput input;
     protected DataOutput output;
 
-    protected NBT() {
-    }
+    protected NBT() {}
 
     protected String readName() throws IOException {
         StringTag tag = readTag(TagType.String);
@@ -1091,7 +1109,7 @@ public class NBT extends GCLog {
 
                     if (t instanceof EndTag) {
                         break;
-                    } else ((CompoundTag) tag).add(t);
+                    } else((CompoundTag) tag).add(t);
                 }
                 break;
             case 11:
