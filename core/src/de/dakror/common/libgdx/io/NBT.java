@@ -472,8 +472,6 @@ public class NBT extends GCLog {
                 query[index++] = Filter.parse(s);
             }
 
-            System.out.println(Arrays.toString(query));
-
             getChildren(query, 0, results);
 
             return results;
