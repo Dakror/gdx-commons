@@ -27,15 +27,18 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool.Poolable;
 import com.badlogic.gdx.utils.Pools;
 
@@ -70,9 +73,9 @@ public class NBT extends GCLog {
         }
     }
 
-    public enum TagType {
-        // Fixed order, do not change!
+    static final TreeMap<Byte, TagType> reverseTags = new TreeMap<>();
 
+    public enum TagType {
         End(0, EndTag.class),
         Byte(1, ByteTag.class),
         Short(2, ShortTag.class),
@@ -95,12 +98,15 @@ public class NBT extends GCLog {
         TagType(int val, Class<? extends Tag> clazz) {
             value = (byte) val;
             this.clazz = clazz;
+
+            reverseTags.put(value, this);
         }
     }
 
     public static abstract class Tag extends GCLog implements Poolable {
         public final TagType type;
         public String name;
+        public Tag parent;
 
         public Tag(TagType type) {
             this.type = type;
@@ -144,6 +150,11 @@ public class NBT extends GCLog {
         }
 
         protected abstract boolean dataEquals(Tag o);
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
+        }
     }
 
     public static class EndTag extends Tag {
@@ -412,13 +423,58 @@ public class NBT extends GCLog {
 
         public abstract void add(Tag tag);
 
-        protected abstract Array<Tag> getChildren(String querySelector);
+        protected abstract Collection<Tag> getData();
 
-        public Array<Tag> query(String queryString) {
+        protected void getChildren(Filter[] query, int index, Set<Tag> targets) {
+            Filter f = query[index];
+
+            for (Tag t : getData()) {
+                if (f.matches(t)) {
+                    if (index == query.length - 1) {
+                        targets.add(t);
+                    }
+
+                    if (t instanceof CollectionTag) {
+                        if (index < query.length - 1) {
+                            ((CollectionTag) t).getChildren(query, index + 1, targets);
+                        }
+
+                        ((CollectionTag) t).getChildren(query, index, targets);
+                    }
+                } else if (t instanceof CollectionTag) {
+                    ((CollectionTag) t).getChildren(query, index, targets);
+                }
+            }
+
+        }
+
+        /**
+         * Query syntax:
+         * tag name to match type
+         * #name to match compound name
+         * [] to match index in list
+         * > (no space) to enforce direct parentship between to filters, otherwise all elements in between possible
+         * 
+         * 
+         * 
+         * @param queryString
+         * @return
+         */
+        public Set<Tag> query(String queryString) {
             String[] parts = queryString.split(" ");
-            Array<Tag> results = new Array<>();
+            Set<Tag> results = new HashSet<>();
 
-            // TODO
+            // parse query
+            Filter[] query = new Filter[parts.length];
+
+            int index = 0;
+            for (String s : parts) {
+                query[index++] = Filter.parse(s);
+            }
+
+            System.out.println(Arrays.toString(query));
+
+            getChildren(query, 0, results);
 
             return results;
         }
@@ -481,12 +537,13 @@ public class NBT extends GCLog {
         public void add(Tag tag) {
             if (tag.type != elementType)
                 throw new RuntimeException("Incompatible Tag Types in List Tag, wanted \"" + elementType + "\", got \"" + tag.type + "\"");
+            tag.parent = this;
             data.add(tag);
         }
 
         @Override
-        protected Array<Tag> getChildren(String querySelector) {
-            return null;
+        protected Collection<Tag> getData() {
+            return data;
         }
     }
 
@@ -543,6 +600,7 @@ public class NBT extends GCLog {
         public void add(Tag tag) {
             if (tag.name == null)
                 throw new RuntimeException("Compound Tag expects named tags, got no name");
+            tag.parent = this;
             data.put(tag.name, tag);
         }
 
@@ -724,10 +782,9 @@ public class NBT extends GCLog {
         }
 
         @Override
-        protected Array<Tag> getChildren(java.lang.String querySelector) {
-            return null;
+        protected Collection<Tag> getData() {
+            return data.values();
         }
-
     }
 
     public static class IntArrayTag extends Tag {
@@ -850,6 +907,181 @@ public class NBT extends GCLog {
         }
     }
 
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+
+    public static interface Filter {
+        static final Pattern indexPattern = Pattern.compile("^\\[(\\d+)\\]$");
+
+        boolean matches(Tag t);
+
+        static Filter parse(String s) {
+            if (s.contains(",")) {
+                String[] parts = s.split(",");
+                Filter[] fs = new Filter[parts.length];
+                for(int i = 0; i < fs.length; i++) fs[i] = parse(parts[i]);
+                
+                return new CompoundFilter(fs);
+            } else if (s.contains(">")) {
+                int index = s.lastIndexOf(">");
+                return new ParentFilter(parse(s.substring(0, index)), parse(s.substring(index + 1)));
+            } else if (s.startsWith("#")) {
+                return new NameFilter(s.substring(1));
+            } else if (s.equals("*") || s.length() == 0) {
+                return new AnyFilter();
+            } else {
+                Matcher m = indexPattern.matcher(s);
+                if (m.matches()) {
+                    return new IndexFilter(Integer.parseInt(m.group(1)));
+                } else {
+                    switch (s.toLowerCase()) {
+                    case "end":
+                        return new TypeFilter(TagType.End);
+                    case "byte":
+                        return new TypeFilter(TagType.Byte);
+                    case "short":
+                        return new TypeFilter(TagType.Short);
+                    case "int":
+                        return new TypeFilter(TagType.Int);
+                    case "long":
+                        return new TypeFilter(TagType.Long);
+                    case "float":
+                        return new TypeFilter(TagType.Float);
+                    case "double":
+                        return new TypeFilter(TagType.Double);
+                    case "bytearray":
+                        return new TypeFilter(TagType.ByteArray);
+                    case "string":
+                        return new TypeFilter(TagType.String);
+                    case "list":
+                        return new TypeFilter(TagType.List);
+                    case "compound":
+                        return new TypeFilter(TagType.Compound);
+                    case "intarray":
+                        return new TypeFilter(TagType.IntArray);
+                    case "longarray":
+                        return new TypeFilter(TagType.LongArray);
+                    case "shortarray":
+                        return new TypeFilter(TagType.ShortArray);
+                    case "floatarray":
+                        return new TypeFilter(TagType.FloatArray);
+                    default:
+                        throw new IllegalArgumentException("Invalid type filter name: " + s);
+                    }
+                }
+            }
+        }
+    }
+
+    public static class NameFilter implements Filter {
+        private String name;
+
+        public NameFilter(String name) {
+            this.name = name;
+        }
+
+        public boolean matches(Tag t) {
+            return t.name != null && t.name.equals(this.name);
+        }
+
+        @Override
+        public String toString() {
+            return "#" + name;
+        }
+    }
+
+    public static class TypeFilter implements Filter {
+        private TagType type;
+
+        public TypeFilter(TagType type) {
+            this.type = type;
+        }
+
+        @Override
+        public boolean matches(Tag t) {
+            return t.type.equals(type);
+        }
+
+        @Override
+        public String toString() {
+            return type.name();
+        }
+    }
+
+    public static class IndexFilter implements Filter {
+        private int index;
+
+        public IndexFilter(int index) {
+            this.index = index;
+        }
+
+        @Override
+        public boolean matches(Tag t) {
+            return t.parent != null && t.parent.type == TagType.List && ((ListTag) t.parent).data.indexOf(t) == index;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + index + "]";
+        }
+    }
+
+    public static class AnyFilter implements Filter {
+        @Override
+        public boolean matches(Tag t) {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "*";
+        }
+    }
+
+    public static class ParentFilter implements Filter {
+        private Filter parent, child;
+
+        public ParentFilter(Filter parent, Filter child) {
+            this.parent = parent;
+            this.child = child;
+        }
+
+        @Override
+        public boolean matches(Tag t) {
+            return t.parent != null && this.parent.matches(t.parent) && this.child.matches(t);
+        }
+
+        @Override
+        public String toString() {
+            return "[" + parent + ">" + child + "]";
+        }
+    }
+
+    public static class CompoundFilter implements Filter {
+        private Filter[] filters;
+
+        public CompoundFilter(Filter... filters) {
+            this.filters = filters;
+        }
+
+        @Override
+        public boolean matches(Tag t) {
+            for (Filter f : filters)
+                if (!f.matches(t)) return false;
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            String s = "{";
+            for (Filter f : filters)
+                s += f;
+            return s + "}";
+        }
+    }
+
+    //////////////////////////////////////////
+    //////////////////////////////////////////
     //////////////////////////////////////////
     //////////////////////////////////////////
 
@@ -1044,112 +1276,112 @@ public class NBT extends GCLog {
 
     @SuppressWarnings("unchecked")
     protected <T extends Tag> T readTag(TagType type) throws IOException {
-        return (T) readPayload(type.value, type.clazz);
+        return (T) readPayload(type, type.clazz);
     }
 
     @SuppressWarnings("unchecked")
-    protected <T extends Tag> T readPayload(byte type, Class<T> expected) throws IOException {
+    protected <T extends Tag> T readPayload(TagType type, Class<T> expected) throws IOException {
         Tag tag = null;
         switch (type) {
-            case 0:
-                tag = Pools.obtain(EndTag.class);
-                break;
-            case 1:
-                tag = Pools.obtain(ByteTag.class);
-                ((ByteTag) tag).data = input.readByte();
-                break;
-            case 2:
-                tag = Pools.obtain(ShortTag.class);
-                ((ShortTag) tag).data = input.readShort();
-                break;
-            case 3:
-                tag = Pools.obtain(IntTag.class);
-                ((IntTag) tag).data = input.readInt();
-                break;
-            case 4:
-                tag = Pools.obtain(LongTag.class);
-                ((LongTag) tag).data = input.readLong();
-                break;
-            case 5:
-                tag = Pools.obtain(FloatTag.class);
-                ((FloatTag) tag).data = input.readFloat();
-                break;
-            case 6:
-                tag = Pools.obtain(DoubleTag.class);
-                ((DoubleTag) tag).data = input.readDouble();
-                break;
-            case 7:
-                tag = Pools.obtain(ByteArrayTag.class);
-                IntTag length7 = readTag(TagType.Int);
-                byte[] data7 = new byte[length7.data];
-                input.readFully(data7);
-                ((ByteArrayTag) tag).data = data7;
-                break;
-            case 8:
-                tag = Pools.obtain(StringTag.class);
-                ShortTag length8 = readTag(TagType.Short);
-                byte[] data8 = new byte[length8.data];
-                input.readFully(data8);
-                ((StringTag) tag).data = new String(data8, "UTF-8");
-                break;
-            case 9:
-                tag = Pools.obtain(ListTag.class);
-                ByteTag type9 = readTag(TagType.Byte);
-                IntTag length9 = readTag(TagType.Int);
-                TagType tagtype9 = TagType.values()[type9.data];
-                ((ListTag) tag).elementType = tagtype9;
-                for (int i = 0; i < length9.data; i++)
-                    ((ListTag) tag).add(readTag(tagtype9));
-                break;
-            case 10:
-                tag = Pools.obtain(CompoundTag.class);
+        case End:
+            tag = Pools.obtain(EndTag.class);
+            break;
+        case Byte:
+            tag = Pools.obtain(ByteTag.class);
+            ((ByteTag) tag).data = input.readByte();
+            break;
+        case Short:
+            tag = Pools.obtain(ShortTag.class);
+            ((ShortTag) tag).data = input.readShort();
+            break;
+        case Int:
+            tag = Pools.obtain(IntTag.class);
+            ((IntTag) tag).data = input.readInt();
+            break;
+        case Long:
+            tag = Pools.obtain(LongTag.class);
+            ((LongTag) tag).data = input.readLong();
+            break;
+        case Float:
+            tag = Pools.obtain(FloatTag.class);
+            ((FloatTag) tag).data = input.readFloat();
+            break;
+        case Double:
+            tag = Pools.obtain(DoubleTag.class);
+            ((DoubleTag) tag).data = input.readDouble();
+            break;
+        case ByteArray:
+            tag = Pools.obtain(ByteArrayTag.class);
+            IntTag length7 = readTag(TagType.Int);
+            byte[] data7 = new byte[length7.data];
+            input.readFully(data7);
+            ((ByteArrayTag) tag).data = data7;
+            break;
+        case String:
+            tag = Pools.obtain(StringTag.class);
+            ShortTag length8 = readTag(TagType.Short);
+            byte[] data8 = new byte[length8.data];
+            input.readFully(data8);
+            ((StringTag) tag).data = new String(data8, "UTF-8");
+            break;
+        case List:
+            tag = Pools.obtain(ListTag.class);
+            ByteTag type9 = readTag(TagType.Byte);
+            IntTag length9 = readTag(TagType.Int);
+            TagType tagtype9 = TagType.values()[type9.data];
+            ((ListTag) tag).elementType = tagtype9;
+            for (int i = 0; i < length9.data; i++)
+                ((ListTag) tag).add(readTag(tagtype9));
+            break;
+        case Compound:
+            tag = Pools.obtain(CompoundTag.class);
 
-                while (true) {
-                    Tag t = readTag(true, null);
+            while (true) {
+                Tag t = readTag(true, null);
 
-                    if (t instanceof EndTag) {
-                        break;
-                    } else((CompoundTag) tag).add(t);
-                }
-                break;
-            case 11:
-                tag = Pools.obtain(IntArrayTag.class);
-                IntTag length11 = readTag(TagType.Int);
-                int[] data11 = new int[length11.data];
-                for (int i = 0; i < data11.length; i++) {
-                    data11[i] = input.readInt();
-                }
-                ((IntArrayTag) tag).data = data11;
-                break;
-            case 12:
-                tag = Pools.obtain(LongArrayTag.class);
-                IntTag length12 = readTag(TagType.Int);
-                long[] data12 = new long[length12.data];
-                for (int i = 0; i < data12.length; i++) {
-                    data12[i] = input.readLong();
-                }
-                ((LongArrayTag) tag).data = data12;
-                break;
-            case 13:
-                tag = Pools.obtain(ShortArrayTag.class);
-                IntTag length13 = readTag(TagType.Int);
-                short[] data13 = new short[length13.data];
-                for (int i = 0; i < data13.length; i++) {
-                    data13[i] = input.readShort();
-                }
-                ((ShortArrayTag) tag).data = data13;
-                break;
-            case 14:
-                tag = Pools.obtain(FloatArrayTag.class);
-                IntTag length14 = readTag(TagType.Int);
-                float[] data14 = new float[length14.data];
-                for (int i = 0; i < data14.length; i++) {
-                    data14[i] = input.readFloat();
-                }
-                ((FloatArrayTag) tag).data = data14;
-                break;
-            default:
-                throw new IOException("Unknown Tag Type: " + type);
+                if (t instanceof EndTag) {
+                    break;
+                } else((CompoundTag) tag).add(t);
+            }
+            break;
+        case IntArray:
+            tag = Pools.obtain(IntArrayTag.class);
+            IntTag length11 = readTag(TagType.Int);
+            int[] data11 = new int[length11.data];
+            for (int i = 0; i < data11.length; i++) {
+                data11[i] = input.readInt();
+            }
+            ((IntArrayTag) tag).data = data11;
+            break;
+        case LongArray:
+            tag = Pools.obtain(LongArrayTag.class);
+            IntTag length12 = readTag(TagType.Int);
+            long[] data12 = new long[length12.data];
+            for (int i = 0; i < data12.length; i++) {
+                data12[i] = input.readLong();
+            }
+            ((LongArrayTag) tag).data = data12;
+            break;
+        case ShortArray:
+            tag = Pools.obtain(ShortArrayTag.class);
+            IntTag length13 = readTag(TagType.Int);
+            short[] data13 = new short[length13.data];
+            for (int i = 0; i < data13.length; i++) {
+                data13[i] = input.readShort();
+            }
+            ((ShortArrayTag) tag).data = data13;
+            break;
+        case FloatArray:
+            tag = Pools.obtain(FloatArrayTag.class);
+            IntTag length14 = readTag(TagType.Int);
+            float[] data14 = new float[length14.data];
+            for (int i = 0; i < data14.length; i++) {
+                data14[i] = input.readFloat();
+            }
+            ((FloatArrayTag) tag).data = data14;
+            break;
+        default:
+            throw new IOException("Unknown Tag Type: " + type);
         }
 
         if (expected != null && !expected.isInstance(tag))
@@ -1164,7 +1396,7 @@ public class NBT extends GCLog {
         String name = null;
         if (named && type != 0) name = readName();
 
-        T tag = readPayload(type, expected);
+        T tag = readPayload(reverseTags.get(type), expected);
 
         tag.name = name;
         return tag;
@@ -1176,7 +1408,7 @@ public class NBT extends GCLog {
         try {
 
             if (compressed) {
-                if (Gdx.app.getType() == ApplicationType.Desktop)
+                if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                     stream = new LZ4FrameInputStream(is);
                 else
                     stream = new LZ4FrameInputStream(is, IOUtils.getLZ4().safeDecompressor(),
@@ -1215,72 +1447,72 @@ public class NBT extends GCLog {
             }
         }
         switch (tag.type) {
-            case End:
-                output.writeByte(0);
-                break;
-            case Byte:
-                output.writeByte(((ByteTag) tag).data);
-                break;
-            case Short:
-                output.writeShort(((ShortTag) tag).data);
-                break;
-            case Int:
-                output.writeInt(((IntTag) tag).data);
-                break;
-            case Long:
-                output.writeLong(((LongTag) tag).data);
-                break;
-            case Float:
-                output.writeFloat(((FloatTag) tag).data);
-                break;
-            case Double:
-                output.writeDouble(((DoubleTag) tag).data);
-                break;
-            case ByteArray:
-                output.writeInt(((ByteArrayTag) tag).data.length);
-                output.write(((ByteArrayTag) tag).data);
-                break;
-            case String:
-                byte[] bytes = ((StringTag) tag).data.getBytes();
-                output.writeShort(bytes.length);
-                output.write(bytes);
-                break;
-            case List:
-                ListTag lt = (ListTag) tag;
-                output.writeByte(lt.elementType.value);
-                output.writeInt(lt.data.size());
-                for (Tag t : lt.data)
-                    writeTag(t, false);
-                break;
-            case Compound:
-                for (Tag t : ((CompoundTag) tag).data.values())
-                    writeTag(t, true);
+        case End:
+            output.writeByte(0);
+            break;
+        case Byte:
+            output.writeByte(((ByteTag) tag).data);
+            break;
+        case Short:
+            output.writeShort(((ShortTag) tag).data);
+            break;
+        case Int:
+            output.writeInt(((IntTag) tag).data);
+            break;
+        case Long:
+            output.writeLong(((LongTag) tag).data);
+            break;
+        case Float:
+            output.writeFloat(((FloatTag) tag).data);
+            break;
+        case Double:
+            output.writeDouble(((DoubleTag) tag).data);
+            break;
+        case ByteArray:
+            output.writeInt(((ByteArrayTag) tag).data.length);
+            output.write(((ByteArrayTag) tag).data);
+            break;
+        case String:
+            byte[] bytes = ((StringTag) tag).data.getBytes();
+            output.writeShort(bytes.length);
+            output.write(bytes);
+            break;
+        case List:
+            ListTag lt = (ListTag) tag;
+            output.writeByte(lt.elementType.value);
+            output.writeInt(lt.data.size());
+            for (Tag t : lt.data)
+                writeTag(t, false);
+            break;
+        case Compound:
+            for (Tag t : ((CompoundTag) tag).data.values())
+                writeTag(t, true);
 
-                // TAG_End
-                output.writeByte(0);
-                break;
-            case IntArray:
-                output.writeInt(((IntArrayTag) tag).data.length);
-                for (int i : ((IntArrayTag) tag).data)
-                    output.writeInt(i);
-                break;
-            case LongArray:
-                output.writeInt(((LongArrayTag) tag).data.length);
-                for (long i : ((LongArrayTag) tag).data)
-                    output.writeLong(i);
-                break;
-            case ShortArray:
-                output.writeInt(((ShortArrayTag) tag).data.length);
-                for (short i : ((ShortArrayTag) tag).data)
-                    output.writeShort(i);
-                break;
-            case FloatArray:
-                output.writeInt(((FloatArrayTag) tag).data.length);
-                for (float i : ((FloatArrayTag) tag).data)
-                    output.writeFloat(i);
-                break;
-            default:
-                throw new IOException("Unknown Tag Type: " + tag.type);
+            // TAG_End
+            output.writeByte(0);
+            break;
+        case IntArray:
+            output.writeInt(((IntArrayTag) tag).data.length);
+            for (int i : ((IntArrayTag) tag).data)
+                output.writeInt(i);
+            break;
+        case LongArray:
+            output.writeInt(((LongArrayTag) tag).data.length);
+            for (long i : ((LongArrayTag) tag).data)
+                output.writeLong(i);
+            break;
+        case ShortArray:
+            output.writeInt(((ShortArrayTag) tag).data.length);
+            for (short i : ((ShortArrayTag) tag).data)
+                output.writeShort(i);
+            break;
+        case FloatArray:
+            output.writeInt(((FloatArrayTag) tag).data.length);
+            for (float i : ((FloatArrayTag) tag).data)
+                output.writeFloat(i);
+            break;
+        default:
+            throw new IOException("Unknown Tag Type: " + tag.type);
         }
     }
 
