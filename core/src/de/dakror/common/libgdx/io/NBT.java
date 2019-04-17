@@ -127,11 +127,7 @@ public class NBT extends GCLog {
         }
 
         protected String toString(String pad) {
-            return pad + getTypeName() + (name != null ? "(\"" + name + "\")" : "") + ": ";
-        }
-
-        public String getTypeName() {
-            return "TAG_" + getClass().getSimpleName().substring(0, getClass().getSimpleName().length() - 3);
+            return pad + type.name() + (name != null ? "(\"" + name + "\")" : "") + ": ";
         }
 
         @Override
