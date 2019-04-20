@@ -149,6 +149,7 @@ public abstract class GameBase extends ApplicationAdapter {
         
         // limit runs for spiral of death
         while (frameTime > 0.0 && runs < 4) {
+            long t = System.nanoTime();
             float deltaTime = (float) Math.min(frameTime, updateRate);
 
             synchronized (sceneStack) {
@@ -160,6 +161,7 @@ public abstract class GameBase extends ApplicationAdapter {
                 }
             }
 
+            updateTimeWindow.addValue(System.nanoTime() - t);
             frameTime -= deltaTime;
             
             runs++;
@@ -169,11 +171,9 @@ public abstract class GameBase extends ApplicationAdapter {
     @Override
     public void render() {
         synchronized (sceneStack) {
-            long t = System.nanoTime();
             update();
-            updateTimeWindow.addValue(System.nanoTime() - t);
 
-            t = System.nanoTime();
+            long t = System.nanoTime();
             Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
             for (Scene scene : sceneStack)
                 scene.draw();
