@@ -395,7 +395,7 @@ public class NBT extends GCLog {
 
         @Override
         protected String toString(String pad) {
-            return super.toString(pad) + data + "\r\n";
+            return super.toString(pad) + "\"" + data + "\"\r\n";
         }
 
         @Override
