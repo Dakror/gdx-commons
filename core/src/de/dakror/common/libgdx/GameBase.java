@@ -144,14 +144,11 @@ public abstract class GameBase extends ApplicationAdapter {
         double newTime = System.nanoTime() / 1_000_000_000.0;
         double frameTime = newTime - currentTime;
         currentTime = newTime;
-        
-        int runs = 0;
-        
-        // limit runs for spiral of death
-        while (frameTime > 0.0 && runs < 4) {
-            long t = System.nanoTime();
+
+        while (frameTime > 0.0) {
             float deltaTime = (float) Math.min(frameTime, updateRate);
 
+            long t = System.nanoTime();
             synchronized (sceneStack) {
                 try {
                     for (int i = sceneStack.size() - 1; i > -1; i--)
@@ -160,11 +157,13 @@ public abstract class GameBase extends ApplicationAdapter {
                     e.printStackTrace();
                 }
             }
+            long realDelta = System.nanoTime() - t
 
-            updateTimeWindow.addValue(System.nanoTime() - t);
+            updateTimeWindow.addValue(realDelta);
             frameTime -= deltaTime;
-            
-            runs++;
+
+            // limit runs for spiral of death
+            if(realDelta > deltaTime) break;
         }
     }
 
