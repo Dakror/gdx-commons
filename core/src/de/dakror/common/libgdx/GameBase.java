@@ -144,9 +144,13 @@ public abstract class GameBase extends ApplicationAdapter {
         double newTime = System.nanoTime() / 1_000_000_000.0;
         double frameTime = newTime - currentTime;
         currentTime = newTime;
-
-        while (frameTime > 0.0) {
+        
+        int runs = 0;
+        
+        // limit runs for spiral of death
+        while (frameTime > 0.0 && runs < 4) {
             float deltaTime = (float) Math.min(frameTime, updateRate);
+
             synchronized (sceneStack) {
                 try {
                     for (int i = sceneStack.size() - 1; i > -1; i--)
@@ -157,6 +161,8 @@ public abstract class GameBase extends ApplicationAdapter {
             }
 
             frameTime -= deltaTime;
+            
+            runs++;
         }
     }
 
