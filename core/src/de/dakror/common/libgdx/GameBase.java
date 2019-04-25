@@ -157,13 +157,12 @@ public abstract class GameBase extends ApplicationAdapter {
                     e.printStackTrace();
                 }
             }
-            long realDelta = System.nanoTime() - t
+            long realDelta = System.nanoTime() - t;
 
             updateTimeWindow.addValue(realDelta);
-            frameTime -= deltaTime;
 
-            // limit runs for spiral of death
-            if(realDelta > deltaTime) break;
+            // ayaya
+            frameTime -= Math.max(realDelta, deltaTime);
         }
     }
 
