@@ -145,9 +145,31 @@ public abstract class GameBase extends ApplicationAdapter {
         double frameTime = newTime - currentTime;
         currentTime = newTime;
 
+        float deltaTime = (float) Math.min(frameTime, updateRate);
+
+        long t = System.nanoTime();
+        synchronized (sceneStack) {
+            try {
+                for (int i = sceneStack.size() - 1; i > -1; i--)
+                    sceneStack.get(i).update(deltaTime);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+        }
+        long realDelta = System.nanoTime() - t;
+
+        updateTimeWindow.addValue(realDelta);
+
+        //
+        // filler framerate system thingy
+        //
+        /*double newTime = System.nanoTime() / 1_000_000_000.0;
+        double frameTime = newTime - currentTime;
+        currentTime = newTime;
+        
         while (frameTime > 0.0) {
             float deltaTime = (float) Math.min(frameTime, updateRate);
-
+        
             long t = System.nanoTime();
             synchronized (sceneStack) {
                 try {
@@ -158,12 +180,12 @@ public abstract class GameBase extends ApplicationAdapter {
                 }
             }
             long realDelta = System.nanoTime() - t;
-
+        
             updateTimeWindow.addValue(realDelta);
-
+        
             // ayaya
             frameTime -= Math.max(realDelta, deltaTime);
-        }
+        }*/
     }
 
     @Override
