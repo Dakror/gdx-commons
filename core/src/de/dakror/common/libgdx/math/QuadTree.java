@@ -14,11 +14,11 @@
  * limitations under the License.
  ******************************************************************************/
 
-package de.dakror.common.libgdx;
+package de.dakror.common.libgdx.math;
 
 import com.badlogic.gdx.utils.Array;
 
-import de.dakror.common.libgdx.QuadTree.Region;
+import de.dakror.common.libgdx.math.QuadTree.Region;
 
 /**
  * taken from https://github.com/alwex/QuadTree

@@ -29,6 +29,11 @@ public class Pair<K, V> implements Poolable {
 
     public Pair() {}
 
+    public Pair(K key, V val) {
+        this.key = key;
+        this.val = val;
+    }
+
     public Pair<K, V> set(K key, V val) {
         this.key = key;
         this.val = val;
