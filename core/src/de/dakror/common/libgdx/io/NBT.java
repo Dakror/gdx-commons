@@ -29,8 +29,10 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
@@ -106,7 +108,7 @@ public class NBT extends GCLog {
     public static abstract class Tag extends GCLog implements Poolable {
         public final TagType type;
         public String name;
-        public Tag parent;
+        public CollectionTag parent;
 
         public Tag(TagType type) {
             this.type = type;
@@ -149,7 +151,7 @@ public class NBT extends GCLog {
 
         @Override
         public int hashCode() {
-            return toString().hashCode();
+            return Objects.hash(parent != null ? parent.hashCode() : 0, toString());
         }
     }
 
@@ -405,8 +407,6 @@ public class NBT extends GCLog {
     }
 
     public static abstract class CollectionTag extends Tag {
-        protected CollectionTag parent;
-
         public CollectionTag(TagType type) {
             super(type);
         }
@@ -418,6 +418,8 @@ public class NBT extends GCLog {
         }
 
         public abstract void add(Tag tag);
+
+        public abstract boolean remove(Tag tag);
 
         protected abstract Collection<Tag> getData();
 
@@ -441,7 +443,6 @@ public class NBT extends GCLog {
                     ((CollectionTag) t).getChildren(query, index, targets);
                 }
             }
-
         }
 
         /**
@@ -539,6 +540,18 @@ public class NBT extends GCLog {
         protected Collection<Tag> getData() {
             return data;
         }
+
+        @Override
+        public boolean remove(Tag tag) {
+            for (Iterator<Tag> iter = data.iterator(); iter.hasNext();) {
+                if (iter.next().equals(tag)) {
+                    iter.remove();
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     public static class CompoundTag extends CollectionTag {
@@ -598,8 +611,9 @@ public class NBT extends GCLog {
             data.put(tag.name, tag);
         }
 
-        public Tag remove(String name) {
-            return data.remove(name);
+        @Override
+        public boolean remove(Tag tag) {
+            return data.remove(tag.name) != null;
         }
 
         public boolean has(String name) {
