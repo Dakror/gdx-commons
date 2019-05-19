@@ -106,12 +106,15 @@ public class NBT extends GCLog {
     }
 
     public static abstract class Tag extends GCLog implements Poolable {
+        static int idCounter = 0;
+        public final int id;
         public final TagType type;
         public String name;
         public CollectionTag parent;
 
         public Tag(TagType type) {
             this.type = type;
+            this.id = idCounter++;
         }
 
         @Override
@@ -149,9 +152,11 @@ public class NBT extends GCLog {
 
         protected abstract boolean dataEquals(Tag o);
 
+        public abstract Object data();
+
         @Override
         public int hashCode() {
-            return Objects.hash(parent != null ? parent.hashCode() : 0, toString());
+            return Objects.hash(parent != null ? parent.id : 0, id);
         }
     }
 
@@ -163,6 +168,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return true;
+        }
+
+        @Override
+        public Object data() {
+            return null;
         }
     }
 
@@ -194,6 +204,11 @@ public class NBT extends GCLog {
         protected boolean dataEquals(Tag o) {
             return data == ((ByteTag) o).data;
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class ShortTag extends Tag {
@@ -223,6 +238,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return data == ((ShortTag) o).data;
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -254,6 +274,11 @@ public class NBT extends GCLog {
         protected boolean dataEquals(Tag o) {
             return data == ((IntTag) o).data;
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class LongTag extends Tag {
@@ -283,6 +308,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return data == ((LongTag) o).data;
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -314,6 +344,11 @@ public class NBT extends GCLog {
         protected boolean dataEquals(Tag o) {
             return data == ((FloatTag) o).data;
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class DoubleTag extends Tag {
@@ -343,6 +378,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return data == ((DoubleTag) o).data;
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -374,6 +414,11 @@ public class NBT extends GCLog {
         protected boolean dataEquals(Tag o) {
             return Arrays.equals(data, ((ByteArrayTag) o).data);
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class StringTag extends Tag {
@@ -403,6 +448,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return data.equals(((StringTag) o).data);
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -551,6 +601,11 @@ public class NBT extends GCLog {
             }
 
             return false;
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -793,6 +848,11 @@ public class NBT extends GCLog {
         protected Collection<Tag> getData() {
             return data.values();
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class IntArrayTag extends Tag {
@@ -822,6 +882,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return Arrays.equals(data, ((IntArrayTag) o).data);
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -853,6 +918,11 @@ public class NBT extends GCLog {
         protected boolean dataEquals(Tag o) {
             return Arrays.equals(data, ((LongArrayTag) o).data);
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class ShortArrayTag extends Tag {
@@ -883,6 +953,11 @@ public class NBT extends GCLog {
         protected boolean dataEquals(Tag o) {
             return Arrays.equals(data, ((ShortArrayTag) o).data);
         }
+
+        @Override
+        public Object data() {
+            return data;
+        }
     }
 
     public static class FloatArrayTag extends Tag {
@@ -912,6 +987,11 @@ public class NBT extends GCLog {
         @Override
         protected boolean dataEquals(Tag o) {
             return Arrays.equals(data, ((FloatArrayTag) o).data);
+        }
+
+        @Override
+        public Object data() {
+            return data;
         }
     }
 
@@ -1413,6 +1493,7 @@ public class NBT extends GCLog {
     }
 
     protected CompoundTag readFile(InputStream is, boolean compressed) throws IOException {
+        Tag.idCounter = 0;
         InputStream stream = is;
         is.mark(Integer.MAX_VALUE);
         try {
@@ -1442,6 +1523,7 @@ public class NBT extends GCLog {
             return t;
         } finally {
             is.close();
+            Tag.idCounter = 0;
         }
     }
 
@@ -1527,6 +1609,7 @@ public class NBT extends GCLog {
     }
 
     protected void writeFile(OutputStream os, CompoundTag data, boolean compressed) throws IOException {
+        Tag.idCounter = 0;
         if (compressed) {
             if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                 os = new LZ4FrameOutputStream(os);
@@ -1539,6 +1622,7 @@ public class NBT extends GCLog {
         writeTag(data, true);
         output = null;
         os.close();
+        Tag.idCounter = 0;
     }
 
     //////////////////////////////////////////
