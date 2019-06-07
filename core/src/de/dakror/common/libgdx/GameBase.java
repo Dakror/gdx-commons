@@ -190,14 +190,18 @@ public abstract class GameBase extends ApplicationAdapter {
 
     @Override
     public void render() {
-        synchronized (sceneStack) {
-            update();
+        try {
+            synchronized (sceneStack) {
+                update();
 
-            long t = System.nanoTime();
-            Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
-            for (Scene scene : sceneStack)
-                scene.draw();
-            frameTimeWindow.addValue(System.nanoTime() - t);
+                long t = System.nanoTime();
+                Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
+                for (Scene scene : sceneStack)
+                    scene.draw();
+                frameTimeWindow.addValue(System.nanoTime() - t);
+            }
+        } catch (Exception e) {
+            pi.message(PlatformInterface.MSG_EXCEPTION, e);
         }
     }
 
