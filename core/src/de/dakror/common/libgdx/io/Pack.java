@@ -50,6 +50,10 @@ public class Pack implements Poolable {
         return map.containsKey(key);
     }
 
+    public boolean remove(String key) {
+        return map.remove(key) != null;
+    }
+
     public Pack put(String key, Object value) {
         map.put(key, value);
         return this;
