@@ -104,12 +104,12 @@ public abstract class EditorCameraControl extends InputAdapter {
             setParamRawPosition(activeElementPos, (int) tmp.x, (int) tmp.y, tileX, tileY);
             updateActiveElementPlaceable();
             return true;
-        } else return handleTap(tileX, tileY);
+        } else return handleTap((int) tmp.x, (int) tmp.y, tileX, tileY);
     }
 
     protected abstract void placeActiveElement();
 
-    protected boolean handleTap(int x, int y) {
+    protected boolean handleTap(int x, int y, int tileX, int tileY) {
         return false;
     }
 
