@@ -202,6 +202,7 @@ public abstract class GameBase extends ApplicationAdapter {
             }
         } catch (Exception e) {
             pi.message(PlatformInterface.MSG_EXCEPTION, e);
+            if (e instanceof RuntimeException) throw e;
         }
     }
 
