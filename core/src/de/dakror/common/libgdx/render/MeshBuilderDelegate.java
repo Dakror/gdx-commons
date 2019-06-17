@@ -19,6 +19,7 @@ package de.dakror.common.libgdx.render;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Mesh;
 import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.VertexAttributes;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.g3d.utils.MeshBuilder;
 import com.badlogic.gdx.graphics.g3d.utils.MeshPartBuilder.VertexInfo;
@@ -36,19 +37,28 @@ public class MeshBuilderDelegate implements SpriteRenderer {
     private static final MeshBuilder builder = new MeshBuilder();
 
     private Mesh mesh;
+    private VertexAttributes attributes;
     private Texture texture;
 
-    public MeshBuilderDelegate(Mesh mesh, Texture texture) {
-        this.mesh = mesh;
+    public MeshBuilderDelegate(VertexAttributes attributes, Texture texture) {
+        this.attributes = attributes;
         this.texture = texture;
     }
 
+    public Mesh getMesh() {
+        return mesh;
+    }
+
     public void begin() {
-        builder.begin(mesh.getVertexAttributes(), GL20.GL_TRIANGLES);
+        if (mesh != null) {
+            mesh.dispose();
+            mesh = null;
+        }
+        builder.begin(attributes, GL20.GL_TRIANGLES);
     }
 
     public void end() {
-        builder.end(mesh);
+        mesh = builder.end();
     }
 
     private VertexInfo set(VertexInfo i, float x, float y, float z, float u, float v) {
@@ -255,10 +265,9 @@ public class MeshBuilderDelegate implements SpriteRenderer {
 
         builder.rect(set(vertTmp1, x1, y1, z, u, v), set(vertTmp2, x2, y2, z, u, v2), set(vertTmp3, x3, y3, z, u2, v2), set(vertTmp4, x4, y4, z, u2, v));
     }
-    
+
     @Override
-    public void flush() {   
-    }
+    public void flush() {}
 
     @Override
     public ShaderProgram getShader() {
@@ -266,5 +275,9 @@ public class MeshBuilderDelegate implements SpriteRenderer {
     }
 
     @Override
-    public void dispose() {}
+    public void dispose() {
+        if (mesh != null) {
+            mesh.dispose();
+        }
+    }
 }
