@@ -278,6 +278,7 @@ public class MeshBuilderDelegate implements SpriteRenderer {
     public void dispose() {
         if (mesh != null) {
             mesh.dispose();
+            mesh = null;
         }
     }
 }
