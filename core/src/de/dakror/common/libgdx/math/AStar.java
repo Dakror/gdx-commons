@@ -6,100 +6,110 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.function.Consumer;
 
-public class AStar {
-    public static abstract class Node {
+public class AStar<T> {
+    private class Node {
         private Node parent;
         private float g;
+        private float h;
+        private T data;
 
-        public float getG() {
-            return g;
+        Node(T data, Node parent) {
+            this.data = data;
+            setParent(parent);
         }
 
-        public void setParent(Node parent) {
+        void setParent(Node parent) {
             this.parent = parent;
             if (parent == null) g = 0;
-            else g = parent.getG() + parent.getEdgeLengthTo(this);
+            else g = parent.g + network.getEdgeLength(parent.data, data);
         }
 
-        public Node getParent() {
-            return parent;
+        public int hashCode() {
+            return data.hashCode();
         }
 
-        public float getF(Node target) {
-            return g + getH(target);
-        }
-
-        public abstract float getH(Node target);
-
-        public abstract int hashCode();
-
-        public abstract float getEdgeLengthTo(Node neighbor);
-        
         @Override
         public boolean equals(Object obj) {
             return obj.getClass().equals(getClass()) && hashCode() == obj.hashCode();
         }
 
-        public abstract void visitNeighbors(Consumer<Node> visitor);
+        @Override
+        public String toString() {
+            return String.format("{%s, g=%f, h=%f}", data.toString(), g, h);
+        }
+    }
+
+    public abstract static class Network<T> {
+        public abstract float getH(T start, T end);
+
+        public abstract float getEdgeLength(T start, T end);
+
+        public abstract void visitNeighbors(T node, Consumer<T> visitor);
     }
 
     LinkedList<Node> openList;
     HashSet<Node> closedList;
-    Node finish;
+    Network<T> network;
+    T finish;
 
     Comparator<Node> comparator;
-    
+
     public AStar() {
         openList = new LinkedList<>();
         closedList = new HashSet<>();
-        comparator = (a, b) -> Float.compare(a.getF(finish), b.getF(finish));
+        comparator = (a, b) -> Float.compare(a.g + a.h, b.g + b.h);
     }
 
-    private void neighborVisitor(Node parent, Node n) {
-        if (closedList.contains(n)) return;
-        int index = openList.indexOf(n);
+    private void neighborVisitor(Node parent, T n) {
+        Node node = new Node(n, parent);
+        if (closedList.contains(node)) return;
+        int index = openList.indexOf(node);
         if (index > -1) {
             Node old = openList.get(index);
-            float newG = parent.getG() + parent.getEdgeLengthTo(n);
-            if(old.getG() > newG) {
+            if (old.g > node.g) {
                 old.setParent(parent);
             }
         } else {
-            n.setParent(parent);
-            openList.add(n);
+            node.h = network.getH(n, finish);
+            openList.add(node);
         }
     }
 
-    public LinkedList<Node> findPath(Node start, Node finish) {
-        LinkedList<Node> path = new LinkedList<>();
+    public LinkedList<T> findPath(Network<T> network, T start, T finish) {
+        this.network = network;
+
+        LinkedList<T> path = new LinkedList<>();
         if (start == finish) {
             path.add(start);
             return path;
         }
 
-        openList.clear();
-        closedList.clear();
         this.finish = finish;
 
-        openList.add(start);
+        openList.clear();
+        closedList.clear();
+        Node startNode = new Node(start, null);
+        startNode.h = network.getH(start, finish);
+
+        openList.add(startNode);
 
         while (!openList.isEmpty()) {
             openList.sort(comparator);
             Node n = openList.poll();
-            
-            if(n.equals(finish)) {
+
+            if (n.data.equals(finish)) {
                 Node t = n;
-                while(t != null) {
-                    path.add(t);
-                    t = t.getParent();
+                while (t != null) {
+                    path.add(t.data);
+                    t = t.parent;
                 }
-                
+
                 Collections.reverse(path);
                 return path;
             }
-            
+
             closedList.add(n);
-            n.visitNeighbors(x -> neighborVisitor(n, x));
+            network.visitNeighbors(n.data, x -> neighborVisitor(n, x));
         }
 
         return null;
