@@ -4,7 +4,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class AStar<T> {
     private class Node {
@@ -113,5 +115,13 @@ public class AStar<T> {
         }
 
         return null;
+    }
+
+    public List<T> getClosedList() {
+        return closedList.stream().map(x -> x.data).collect(Collectors.toList());
+    }
+
+    public List<T> getOpenList() {
+        return openList.stream().map(x -> x.data).collect(Collectors.toList());
     }
 }
