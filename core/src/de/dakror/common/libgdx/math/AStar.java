@@ -26,6 +26,7 @@ public class AStar<T> {
             else g = parent.g + network.getEdgeLength(parent.data, data);
         }
 
+        @Override
         public int hashCode() {
             return data.hashCode();
         }
@@ -114,7 +115,7 @@ public class AStar<T> {
             network.visitNeighbors(n.data, x -> neighborVisitor(n, x));
         }
 
-        return null;
+        return path;
     }
 
     public List<T> getClosedList() {
