@@ -1,9 +1,11 @@
 package de.dakror.common.libgdx.math;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class AStar<T> {
@@ -45,7 +47,7 @@ public class AStar<T> {
 
         public abstract float getEdgeLength(T start, T end);
 
-        public abstract void visitNeighbors(T node, Consumer<T> visitor);
+        public abstract void visitNeighbors(T node, T start, T end, Consumer<T> visitor);
     }
 
     LinkedList<Node> openList;
@@ -110,9 +112,23 @@ public class AStar<T> {
             }
 
             closedList.add(n);
-            network.visitNeighbors(n.data, x -> neighborVisitor(n, x));
+            network.visitNeighbors(n.data, start, finish, x -> neighborVisitor(n, x));
         }
 
         return path;
+    }
+
+    public List<T> getOpenList() {
+        List<T> l = new ArrayList<>();
+        for (Node n : openList)
+            l.add(n.data);
+        return l;
+    }
+
+    public List<T> getClosedList() {
+        List<T> l = new ArrayList<>();
+        for (Node n : closedList)
+            l.add(n.data);
+        return l;
     }
 }
