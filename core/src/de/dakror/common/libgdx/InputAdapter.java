@@ -20,12 +20,10 @@ import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Vector2;
 
-import de.dakror.common.GCLog;
-
 /**
  * @author Maximilian Stark | Dakror
  */
-public class InputAdapter extends GCLog implements InputProcessor, GestureListener {
+public class InputAdapter implements InputProcessor, GestureListener {
     @Override
     public boolean touchDown(float x, float y, int pointer, int button) {
         return false;

@@ -20,13 +20,12 @@ import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pool.Poolable;
 
-import de.dakror.common.GCLog;
 import de.dakror.common.libgdx.ChangeNotifier.Event.Type;
 
 /**
  * @author Maximilian Stark | Dakror
  */
-public class ChangeNotifier<T> extends GCLog {
+public class ChangeNotifier<T> {
     public static class Event<T> implements Poolable {
         public enum Type {
             ADD,

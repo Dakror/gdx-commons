@@ -21,12 +21,10 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 
-import de.dakror.common.GCLog;
-
 /**
  * @author Maximilian Stark | Dakror
  */
-public class SpriteBatchDelegate extends GCLog implements SpriteRenderer {
+public class SpriteBatchDelegate implements SpriteRenderer {
     private SpriteBatch batch;
     private Texture atlas;
 

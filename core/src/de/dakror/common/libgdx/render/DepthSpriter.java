@@ -27,12 +27,10 @@ import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Matrix4;
 
-import de.dakror.common.GCLog;
-
 /**
  * @author Maximilian Stark | Dakror
  */
-public class DepthSpriter extends GCLog implements SpriteRenderer {
+public class DepthSpriter implements SpriteRenderer {
     private final float[] vertices;
     private int idx;
     protected Mesh staticMesh, dynMesh;

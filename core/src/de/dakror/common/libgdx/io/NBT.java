@@ -27,11 +27,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
@@ -41,10 +38,11 @@ import java.util.zip.GZIPInputStream;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.Pool.Poolable;
 import com.badlogic.gdx.utils.Pools;
 
-import de.dakror.common.GCLog;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream.BLOCKSIZE;
@@ -53,7 +51,7 @@ import net.jpountz.lz4.LZ4FrameOutputStream.FLG;
 /**
  * @author Maximilian Stark | Dakror
  */
-public class NBT extends GCLog {
+public class NBT {
     public static class NBTException extends Exception {
 
         private static final long serialVersionUID = 1L;
@@ -105,7 +103,7 @@ public class NBT extends GCLog {
         }
     }
 
-    public static abstract class Tag extends GCLog implements Poolable {
+    public static abstract class Tag implements Poolable {
         static int idCounter = 0;
         public final int id;
         public final TagType type;
@@ -471,7 +469,7 @@ public class NBT extends GCLog {
 
         public abstract boolean remove(Tag tag);
 
-        protected abstract Collection<Tag> getData();
+        protected abstract Iterable<Tag> getData();
 
         protected void getChildren(Filter[] query, int index, Set<Tag> targets) {
             Filter f = query[index];
@@ -527,16 +525,16 @@ public class NBT extends GCLog {
 
     public static class ListTag extends CollectionTag {
         public TagType elementType;
-        public final LinkedList<Tag> data;
+        public final Array<Tag> data;
 
         public ListTag() {
             super(TagType.List);
-            data = new LinkedList<>();
+            data = new Array<>();
         }
 
         public ListTag(String name, TagType type) {
             super(TagType.List);
-            data = new LinkedList<>();
+            data = new Array<>();
             this.elementType = type;
             this.name = name;
         }
@@ -559,12 +557,10 @@ public class NBT extends GCLog {
         protected String toString(String pad) {
             StringBuilder sb = new StringBuilder();
             sb.append(super.toString(pad));
-            sb.append(data.size());
+            sb.append(data.size);
             sb.append(" entries of type ");
             sb.append(elementType);
-            sb.append("\r\n");
-            sb.append(pad);
-            sb.append("{\r\n");
+            sb.append(" {\r\n");
             for (Tag t : data) {
                 sb.append(t.toString(pad + "  "));
             }
@@ -587,7 +583,7 @@ public class NBT extends GCLog {
         }
 
         @Override
-        protected Collection<Tag> getData() {
+        protected Iterable<Tag> getData() {
             return data;
         }
 
@@ -610,16 +606,16 @@ public class NBT extends GCLog {
     }
 
     public static class CompoundTag extends CollectionTag {
-        public final LinkedHashMap<String, Tag> data;
+        public final ObjectMap<String, Tag> data;
 
         public CompoundTag() {
             super(TagType.Compound);
-            data = new LinkedHashMap<>();
+            data = new ObjectMap<>();
         }
 
         public CompoundTag(String name) {
             super(TagType.Compound);
-            data = new LinkedHashMap<>();
+            data = new ObjectMap<>();
             this.name = name;
         }
 
@@ -640,11 +636,8 @@ public class NBT extends GCLog {
         protected String toString(String pad) {
             StringBuilder sb = new StringBuilder();
             sb.append(super.toString(pad));
-            sb.append(data.size());
-            sb.append(" entries");
-            sb.append("\r\n");
-            sb.append(pad);
-            sb.append("{\r\n");
+            sb.append(data.size);
+            sb.append(" entries {\r\n");
             for (Tag t : data.values()) {
                 sb.append(t.toString(pad + "  "));
             }
@@ -845,7 +838,7 @@ public class NBT extends GCLog {
         }
 
         @Override
-        protected Collection<Tag> getData() {
+        protected Iterable<Tag> getData() {
             return data.values();
         }
 
@@ -1107,7 +1100,7 @@ public class NBT extends GCLog {
 
         @Override
         public boolean matches(Tag t) {
-            return t.parent != null && t.parent.type == TagType.List && ((ListTag) t.parent).data.indexOf(t) == index;
+            return t.parent != null && t.parent.type == TagType.List && ((ListTag) t.parent).data.indexOf(t, false) == index;
         }
 
         @Override
@@ -1175,7 +1168,7 @@ public class NBT extends GCLog {
     //////////////////////////////////////////
     //////////////////////////////////////////
 
-    public static class Builder extends GCLog {
+    public static class Builder {
         protected CompoundTag root;
 
         protected CollectionTag current;
@@ -1572,7 +1565,7 @@ public class NBT extends GCLog {
             case List:
                 ListTag lt = (ListTag) tag;
                 output.writeByte(lt.elementType.value);
-                output.writeInt(lt.data.size());
+                output.writeInt(lt.data.size);
                 for (Tag t : lt.data)
                     writeTag(t, false);
                 break;
