@@ -1,12 +1,12 @@
 package de.dakror.common.libgdx.audio;
 
+import java.util.Iterator;
+
 import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pool.Poolable;
-
-import java.util.Iterator;
 
 import de.dakror.common.Callback;
 
@@ -60,10 +60,19 @@ public class SoundManager {
 
     public void setMusicVolume(float musicVolume) {
         this.musicVolume = musicVolume;
+        if (music != null) music.setVolume(musicVolume);
+    }
+
+    public float getMusicVolume() {
+        return musicVolume;
     }
 
     public void setSoundVolume(float soundVolume) {
         this.soundVolume = soundVolume;
+    }
+
+    public float getSoundVolume() {
+        return soundVolume;
     }
 
     public void setFadeSpeed(float fadeSpeed) {
