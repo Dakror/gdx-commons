@@ -97,7 +97,7 @@ public class AStar<T> {
         openList.add(startNode);
 
         while (!openList.isEmpty()) {
-            openList.sort(comparator);
+            Collections.sort(openList, comparator);
             Node n = openList.poll();
 
             if (n.data.equals(finish)) {
