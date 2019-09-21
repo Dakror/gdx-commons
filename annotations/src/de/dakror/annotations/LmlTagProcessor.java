@@ -40,7 +40,7 @@ import de.dakror.common.libgdx.lml.LmlTag;
  * @author Maximilian Stark | Dakror
  */
 @SupportedAnnotationTypes(value = { "de.dakror.common.libgdx.lml.LmlTag" })
-@SupportedSourceVersion(value = SourceVersion.RELEASE_8)
+@SupportedSourceVersion(value = SourceVersion.RELEASE_7)
 public class LmlTagProcessor extends AbstractProcessor {
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
