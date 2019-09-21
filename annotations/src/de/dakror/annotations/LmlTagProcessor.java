@@ -19,6 +19,8 @@ package de.dakror.annotations;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
@@ -56,10 +58,18 @@ public class LmlTagProcessor extends AbstractProcessor {
 
                     ElementFilter.typesIn(roundEnv.getElementsAnnotatedWith(annotation))
                             .stream()
-                            .filter(x -> x.getKind() == ElementKind.CLASS
-                                    && x.getInterfaces().contains(tagI)).forEach(x -> {
-                                        pw.println("         lml.tag(new CustomTagProvider(" + x.getQualifiedName().toString() + ".class), \"" + x.getAnnotation(LmlTag.class).tagName() + "\");");
-                                    });
+                            .filter(new Predicate<TypeElement>() {
+                                @Override
+                                public boolean test(TypeElement x) {
+                                    return x.getKind() == ElementKind.CLASS
+                                            && x.getInterfaces().contains(tagI);
+                                }
+                            }).forEach(new Consumer<TypeElement>() {
+                                @Override
+                                public void accept(TypeElement x) {
+                                    pw.println("         lml.tag(new CustomTagProvider(" + x.getQualifiedName().toString() + ".class), \"" + x.getAnnotation(LmlTag.class).tagName() + "\");");
+                                }
+                            });
 
                     pw.println("    }");
                     pw.println("}");
