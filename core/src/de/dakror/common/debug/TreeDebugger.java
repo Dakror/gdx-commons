@@ -20,6 +20,7 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -112,7 +113,12 @@ public class TreeDebugger {
             c = c.getSuperclass();
         }
 
-        Collections.sort(fields, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+        Collections.sort(fields, new Comparator<Field>() {
+            @Override
+            public int compare(Field o1, Field o2) {
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
         return fields.toArray(new Field[] {});
     }
 

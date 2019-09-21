@@ -6,9 +6,12 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class AStar<T> {
+    public static interface Visitor<T> {
+        void visit(T element);
+    }
+
     private class Node {
         private Node parent;
         private float g;
@@ -47,7 +50,7 @@ public class AStar<T> {
 
         public abstract float getEdgeLength(T start, T end);
 
-        public abstract void visitNeighbors(T node, T start, T end, Consumer<T> visitor);
+        public abstract void visitNeighbors(T node, T start, T end, Visitor<T> visitor);
     }
 
     LinkedList<Node> openList;
@@ -60,7 +63,12 @@ public class AStar<T> {
     public AStar() {
         openList = new LinkedList<>();
         closedList = new HashSet<>();
-        comparator = (a, b) -> Float.compare(a.g + a.h, b.g + b.h);
+        comparator = new Comparator<AStar<T>.Node>() {
+            @Override
+            public int compare(AStar<T>.Node a, AStar<T>.Node b) {
+                return Float.compare(a.g + a.h, b.g + b.h);
+            }
+        };
     }
 
     private void neighborVisitor(Node parent, T n) {
@@ -98,7 +106,7 @@ public class AStar<T> {
 
         while (!openList.isEmpty()) {
             Collections.sort(openList, comparator);
-            Node n = openList.poll();
+            final Node n = openList.poll();
 
             if (n.data.equals(finish)) {
                 Node t = n;
@@ -112,7 +120,12 @@ public class AStar<T> {
             }
 
             closedList.add(n);
-            network.visitNeighbors(n.data, start, finish, x -> neighborVisitor(n, x));
+            network.visitNeighbors(n.data, start, finish, new Visitor<T>() {
+                @Override
+                public void visit(T x) {
+                    neighborVisitor(n, x);
+                }
+            });
         }
 
         return path;

@@ -81,7 +81,7 @@ public class ConcaveHull {
         }
     }
 
-    private ArrayList<Point> sortByAngle(ArrayList<Point> l, Point q, Double a) {
+    private ArrayList<Point> sortByAngle(ArrayList<Point> l, final Point q, final Double a) {
         // Sort by angle descending
         Collections.sort(l, new Comparator<Point>() {
             @Override

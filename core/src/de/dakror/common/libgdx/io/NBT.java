@@ -514,7 +514,7 @@ public class NBT {
 
             int index = 0;
             for (String s : parts) {
-                query[index++] = Filter.parse(s);
+                query[index++] = parseFilter(s);
             }
 
             getChildren(query, 0, results);
@@ -995,64 +995,6 @@ public class NBT {
         static final Pattern indexPattern = Pattern.compile("^\\[(\\d+)\\]$");
 
         boolean matches(Tag t);
-
-        static Filter parse(String s) {
-            if (s.contains(",")) {
-                String[] parts = s.split(",");
-                Filter[] fs = new Filter[parts.length];
-                for (int i = 0; i < fs.length; i++)
-                    fs[i] = parse(parts[i]);
-
-                return new CompoundFilter(fs);
-            } else if (s.contains(">")) {
-                int index = s.lastIndexOf(">");
-                return new ParentFilter(parse(s.substring(0, index)), parse(s.substring(index + 1)));
-            } else if (s.startsWith("#")) {
-                return new NameFilter(s.substring(1));
-            } else if (s.equals("*") || s.length() == 0) {
-                return new AnyFilter();
-            } else {
-                Matcher m = indexPattern.matcher(s);
-                if (m.matches()) {
-                    return new IndexFilter(Integer.parseInt(m.group(1)));
-                } else {
-                    switch (s.toLowerCase()) {
-                        case "end":
-                            return new TypeFilter(TagType.End);
-                        case "byte":
-                            return new TypeFilter(TagType.Byte);
-                        case "short":
-                            return new TypeFilter(TagType.Short);
-                        case "int":
-                            return new TypeFilter(TagType.Int);
-                        case "long":
-                            return new TypeFilter(TagType.Long);
-                        case "float":
-                            return new TypeFilter(TagType.Float);
-                        case "double":
-                            return new TypeFilter(TagType.Double);
-                        case "bytearray":
-                            return new TypeFilter(TagType.ByteArray);
-                        case "string":
-                            return new TypeFilter(TagType.String);
-                        case "list":
-                            return new TypeFilter(TagType.List);
-                        case "compound":
-                            return new TypeFilter(TagType.Compound);
-                        case "intarray":
-                            return new TypeFilter(TagType.IntArray);
-                        case "longarray":
-                            return new TypeFilter(TagType.LongArray);
-                        case "shortarray":
-                            return new TypeFilter(TagType.ShortArray);
-                        case "floatarray":
-                            return new TypeFilter(TagType.FloatArray);
-                        default:
-                            throw new IllegalArgumentException("Invalid type filter name: " + s);
-                    }
-                }
-            }
-        }
     }
 
     public static class NameFilter implements Filter {
@@ -1767,5 +1709,66 @@ public class NBT {
 
     public static void write(OutputStream os, CompoundTag data, boolean compressed) throws IOException {
         nbt.writeFile(os, data, compressed);
+    }
+
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+
+    public static Filter parseFilter(String s) {
+        if (s.contains(",")) {
+            String[] parts = s.split(",");
+            Filter[] fs = new Filter[parts.length];
+            for (int i = 0; i < fs.length; i++)
+                fs[i] = parseFilter(parts[i]);
+
+            return new CompoundFilter(fs);
+        } else if (s.contains(">")) {
+            int index = s.lastIndexOf(">");
+            return new ParentFilter(parseFilter(s.substring(0, index)), parseFilter(s.substring(index + 1)));
+        } else if (s.startsWith("#")) {
+            return new NameFilter(s.substring(1));
+        } else if (s.equals("*") || s.length() == 0) {
+            return new AnyFilter();
+        } else {
+            Matcher m = Filter.indexPattern.matcher(s);
+            if (m.matches()) {
+                return new IndexFilter(Integer.parseInt(m.group(1)));
+            } else {
+                switch (s.toLowerCase()) {
+                    case "end":
+                        return new TypeFilter(TagType.End);
+                    case "byte":
+                        return new TypeFilter(TagType.Byte);
+                    case "short":
+                        return new TypeFilter(TagType.Short);
+                    case "int":
+                        return new TypeFilter(TagType.Int);
+                    case "long":
+                        return new TypeFilter(TagType.Long);
+                    case "float":
+                        return new TypeFilter(TagType.Float);
+                    case "double":
+                        return new TypeFilter(TagType.Double);
+                    case "bytearray":
+                        return new TypeFilter(TagType.ByteArray);
+                    case "string":
+                        return new TypeFilter(TagType.String);
+                    case "list":
+                        return new TypeFilter(TagType.List);
+                    case "compound":
+                        return new TypeFilter(TagType.Compound);
+                    case "intarray":
+                        return new TypeFilter(TagType.IntArray);
+                    case "longarray":
+                        return new TypeFilter(TagType.LongArray);
+                    case "shortarray":
+                        return new TypeFilter(TagType.ShortArray);
+                    case "floatarray":
+                        return new TypeFilter(TagType.FloatArray);
+                    default:
+                        throw new IllegalArgumentException("Invalid type filter name: " + s);
+                }
+            }
+        }
     }
 }
