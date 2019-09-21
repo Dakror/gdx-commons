@@ -63,4 +63,8 @@ public class AmbientSound {
             }
         }
     }
+
+    public void stop() {
+        sound.stop();
+    }
 }
