@@ -47,7 +47,7 @@ public class AmbientSound {
     }
 
     public void update(float deltaTime) {
-        if (volume != nominalVolume) {
+        if (volume != nominalVolume || soundId == -1) {
             if (progress >= interpolationTime) {
                 volume = nominalVolume;
                 progress = 0;
