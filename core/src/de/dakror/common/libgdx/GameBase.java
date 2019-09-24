@@ -20,8 +20,10 @@ import static com.badlogic.gdx.graphics.GL20.*;
 
 import java.util.Stack;
 
+import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.math.WindowedMean;
 
@@ -31,6 +33,10 @@ import de.dakror.common.libgdx.ui.Scene;
  * @author Maximilian Stark | Dakror
  */
 public abstract class GameBase extends ApplicationAdapter {
+    public static enum WindowMode {
+        Fullscreen, Borderless;
+    }
+
     protected final Stack<Scene> sceneStack = new Stack<>();
     protected InputMultiplexer input;
 
@@ -45,19 +51,60 @@ public abstract class GameBase extends ApplicationAdapter {
     long lastFrameTime;
     float frameTime;
 
+    WindowMode mode;
+
     protected float updateRate = 1 / 60f;
 
     double currentTime;
 
-    public GameBase(PlatformInterface pi) {
+    public GameBase(WindowMode mode, PlatformInterface pi) {
         this.pi = pi;
+        this.mode = mode;
+    }
+
+    protected void setWindowMode(WindowMode mode) {
+        if (Gdx.app.getType() != ApplicationType.Desktop) return;
+
+        if (mode == WindowMode.Borderless) {
+            Gdx.graphics.setUndecorated(true);
+            Gdx.graphics.setWindowedMode(Gdx.graphics.getDisplayMode().width, Gdx.graphics.getDisplayMode().height);
+            Gdx.graphics.setResizable(false);
+        } else if (mode == WindowMode.Fullscreen) {
+            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+        } /* else {
+          // cant re-decorate right now, idk
+             Gdx.graphics.setUndecorated(false);
+             Gdx.graphics.setWindowedMode(Gdx.graphics.getDisplayMode().width, Gdx.graphics.getDisplayMode().height);
+             Gdx.graphics.setResizable(true);
+             Gdx.graphics.setUndecorated(false);
+          }*/
+
+        this.mode = mode;
     }
 
     @Override
     public void create() {
         input = new InputMultiplexer();
+
+        if (Gdx.app.getType() == ApplicationType.Desktop) {
+            input.addProcessor(new InputAdapter() {
+                @Override
+                public boolean keyDown(int keycode) {
+                    if (keycode == Keys.F11) {
+                        if (mode == null) mode = WindowMode.Borderless;
+                        setWindowMode(WindowMode.values()[(mode.ordinal() + 1) % WindowMode.values().length]);
+
+                        return true;
+                    }
+                    return false;
+                }
+            });
+            setWindowMode(mode);
+        }
+
         Gdx.input.setInputProcessor(input);
         currentTime = System.nanoTime() / 1_000_000_000.0;
+
     }
 
     public Scene getScene() {
