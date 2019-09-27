@@ -206,9 +206,11 @@ public abstract class EditorCameraControl extends InputAdapter {
         return true;
     }
 
-    protected void clampZoom(float zoom) {
-        cam.zoom = Math.round(MathUtils.clamp(zoom, minZoom, maxZoom) * scale) / (float) scale;
+    protected boolean clampZoom(float zoom) {
+        float clamped = MathUtils.clamp(zoom, minZoom, maxZoom);
+        cam.zoom = Math.round(clamped * scale) / (float) scale;
         cameraChanged = true;
+        return zoom == clamped;
     }
 
     public abstract void clampCam(OrthographicCamera cam);
