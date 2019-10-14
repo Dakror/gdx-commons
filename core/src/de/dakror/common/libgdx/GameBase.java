@@ -243,6 +243,7 @@ public abstract class GameBase extends ApplicationAdapter {
                 update();
 
                 long t = System.nanoTime();
+
                 Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
                 for (Scene scene : sceneStack)
                     scene.draw();
