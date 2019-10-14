@@ -70,7 +70,8 @@ public abstract class GameBase extends ApplicationAdapter {
             Gdx.graphics.setWindowedMode(Gdx.graphics.getDisplayMode().width, Gdx.graphics.getDisplayMode().height);
             Gdx.graphics.setResizable(true);
         } else if (mode == WindowMode.Fullscreen) {
-            Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+            if (!Gdx.graphics.isFullscreen())
+                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
         } /* else {
           // cant re-decorate right now, idk
              Gdx.graphics.setUndecorated(false);
