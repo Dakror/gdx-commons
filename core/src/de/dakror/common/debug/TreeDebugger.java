@@ -18,11 +18,7 @@ package de.dakror.common.debug;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maximilian Stark | Dakror

@@ -16,32 +16,19 @@
 
 package de.dakror.common.libgdx.io;
 
-import java.io.BufferedReader;
+import java.io.*;
 import java.io.DataInput;
-import java.io.DataInputStream;
 import java.io.DataOutput;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
+import java.lang.StringBuilder;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.Array;
-import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.*;
 import com.badlogic.gdx.utils.Pool.Poolable;
-import com.badlogic.gdx.utils.Pools;
 
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
