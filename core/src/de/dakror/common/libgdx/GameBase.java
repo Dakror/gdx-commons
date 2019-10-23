@@ -195,11 +195,15 @@ public abstract class GameBase extends ApplicationAdapter {
 
         long t = System.nanoTime();
         synchronized (sceneStack) {
-            try {
-                for (int i = sceneStack.size() - 1; i > -1; i--)
-                    sceneStack.get(i).update(deltaTime);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                e.printStackTrace();
+            for (int i = sceneStack.size() - 1; i > -1; i--) {
+                Scene s = null;
+                try {
+                    s = sceneStack.get(i);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
+                if (s != null)
+                    s.update(deltaTime);
             }
         }
         long realDelta = System.nanoTime() - t;
