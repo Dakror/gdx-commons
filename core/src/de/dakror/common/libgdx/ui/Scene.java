@@ -1,5 +1,6 @@
 package de.dakror.common.libgdx.ui;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.g2d.Batch;
@@ -66,8 +67,13 @@ public abstract class Scene {
 
     public void dispose() {}
 
-    public void resize(int width, int height) {
-        if (stage != null)
-            stage.getViewport().update(width, height, true);
+    public void resize(final int width, final int height) {
+        Gdx.app.postRunnable(new Runnable() {
+            @Override
+            public void run() {
+                if (stage != null)
+                    stage.getViewport().update(width, height, true);
+            }
+        });
     }
 }
