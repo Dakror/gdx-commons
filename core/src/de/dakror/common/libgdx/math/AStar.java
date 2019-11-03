@@ -55,6 +55,8 @@ public class AStar<T> {
 
     Comparator<Node> comparator;
 
+    long maxTime;
+
     public AStar() {
         openList = new LinkedList<>();
         closedList = new HashSet<>();
@@ -81,6 +83,14 @@ public class AStar<T> {
         }
     }
 
+    public void setMaxTime(long maxTime) {
+        this.maxTime = maxTime;
+    }
+
+    public long getMaxTime() {
+        return maxTime;
+    }
+
     public LinkedList<T> findPath(Network<T> network, T start, T finish) {
         this.network = network;
 
@@ -99,7 +109,12 @@ public class AStar<T> {
 
         openList.add(startNode);
 
+        long now = System.nanoTime();
         while (!openList.isEmpty()) {
+            if (maxTime > 0 && System.nanoTime() - now > maxTime * 1_000_000) {
+                break;
+            }
+
             Collections.sort(openList, comparator);
             final Node n = openList.poll();
 
