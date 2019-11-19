@@ -39,17 +39,27 @@ public class IOUtils {
     }
 
     public static LZ4Factory getLZ4() {
-        LZ4Factory nativ = LZ4Factory.nativeInstance();
-        if (nativ != null) return nativ;
+        try {
+            LZ4Factory nativ = LZ4Factory.nativeInstance();
+            if (nativ != null) return nativ;
+        } catch (Throwable e) {
+            // empty catch error handling to fallthrough
+        }
 
+        // no jni in ios (for now)
         // android does not support all of sun.misc.Unsafe
         return LZ4Factory.safeInstance();
     }
 
     public static XXHashFactory getXXHash() {
-        XXHashFactory nativ = XXHashFactory.nativeInstance();
-        if (nativ != null) return nativ;
+        try {
+            XXHashFactory nativ = XXHashFactory.nativeInstance();
+            if (nativ != null) return nativ;
+        } catch (Throwable e) {
+            // empty catch error handling to fallthrough
+        }
 
+        // no jni in ios (for now)
         // android does not support all of sun.misc.Unsafe
         return XXHashFactory.safeInstance();
     }
