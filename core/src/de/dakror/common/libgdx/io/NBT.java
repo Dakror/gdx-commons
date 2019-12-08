@@ -547,7 +547,9 @@ public class NBT {
             sb.append(data.size);
             sb.append(" entries of type ");
             sb.append(elementType);
-            sb.append(" {\r\n");
+            sb.append("\r\n");
+            sb.append(pad);
+            sb.append("{\r\n");
             for (Tag t : data) {
                 sb.append(t.toString(pad + "  "));
             }
@@ -624,7 +626,9 @@ public class NBT {
             StringBuilder sb = new StringBuilder();
             sb.append(super.toString(pad));
             sb.append(data.size);
-            sb.append(" entries {\r\n");
+            sb.append(" entries\r\n");
+            sb.append(pad);
+            sb.append("{\r\n");
             for (Tag t : data.values()) {
                 sb.append(t.toString(pad + "  "));
             }
