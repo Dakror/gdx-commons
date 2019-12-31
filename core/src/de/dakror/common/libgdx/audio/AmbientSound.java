@@ -25,12 +25,12 @@ public class AmbientSound {
     Sound sound;
     long soundId;
 
-    float nominalVolume;
-    float oldVolume;
-    float volume;
+    double nominalVolume;
+    double oldVolume;
+    double volume;
 
-    float progress;
-    float interpolationTime;
+    double progress;
+    double interpolationTime;
 
     public AmbientSound(Sound sound, float interpolationTime) {
         this.sound = sound;
@@ -46,7 +46,7 @@ public class AmbientSound {
         }
     }
 
-    public void update(float deltaTime) {
+    public void update(double deltaTime) {
         if (volume != nominalVolume || soundId == -1) {
             if (progress >= interpolationTime) {
                 volume = nominalVolume;
@@ -57,9 +57,9 @@ public class AmbientSound {
             }
 
             if (soundId == -1) {
-                soundId = sound.loop(volume);
+                soundId = sound.loop((float) volume);
             } else {
-                sound.setVolume(soundId, volume);
+                sound.setVolume(soundId, (float) volume);
             }
         }
     }

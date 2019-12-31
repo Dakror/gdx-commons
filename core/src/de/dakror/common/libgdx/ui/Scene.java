@@ -18,16 +18,16 @@ public abstract class Scene {
         return stage;
     }
 
-    public void update(float deltaTime) {
+    public void update(double deltaTime) {
         if (fadeIn) {
             if (alpha == 1) fadeIn = false;
-            alpha = Math.min(1, alpha + deltaTime * 4); // fadeIn time: 0.25s
+            alpha = (float) Math.min(1, alpha + deltaTime * 4); // fadeIn time: 0.25s
         }
         if (fadeOut) {
-            alpha = Math.max(0, alpha - deltaTime * 4); // fadeIn time: 0.25s
+            alpha = (float) Math.max(0, alpha - deltaTime * 4); // fadeIn time: 0.25s
         }
         if (stage != null)
-            stage.act(deltaTime);
+            stage.act((float) deltaTime);
     }
 
     public void draw() {
