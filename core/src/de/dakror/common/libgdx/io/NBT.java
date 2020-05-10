@@ -536,7 +536,7 @@ public class NBT {
         @Override
         public void free() {
             for (Tag t : data)
-                Pools.free(t);
+                t.free();
             super.free();
         }
 
@@ -617,7 +617,7 @@ public class NBT {
         @Override
         public void free() {
             for (Tag t : data.values())
-                Pools.free(t);
+                t.free();
             super.free();
         }
 
@@ -1423,7 +1423,6 @@ public class NBT {
         InputStream stream = is;
         is.mark(Integer.MAX_VALUE);
         try {
-
             if (compressed) {
                 if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                     stream = new LZ4FrameInputStream(is);
@@ -1448,7 +1447,7 @@ public class NBT {
             CompoundTag t = readTag(true, CompoundTag.class);
             return t;
         } finally {
-            is.close();
+            stream.close();
             Tag.idCounter = 0;
         }
     }
