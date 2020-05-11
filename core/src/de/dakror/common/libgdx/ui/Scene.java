@@ -59,13 +59,18 @@ public abstract class Scene {
         alpha = 0;
     }
 
-    public void hide() {}
+    public void hide() {
+    }
 
-    public void pause() {}
+    public void pause() {
+    }
 
-    public void resume() {}
+    public void resume() {
+    }
 
-    public void dispose() {}
+    public void dispose() {
+        stage.dispose();
+    }
 
     public void resize(final int width, final int height) {
         Gdx.app.postRunnable(new Runnable() {
