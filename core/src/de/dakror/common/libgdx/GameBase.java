@@ -20,9 +20,11 @@ import static com.badlogic.gdx.graphics.GL20.*;
 
 import java.util.Stack;
 
-import com.badlogic.gdx.*;
 import com.badlogic.gdx.Application.ApplicationType;
+import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.math.WindowedMean;
 
 import de.dakror.common.libgdx.ui.Scene;

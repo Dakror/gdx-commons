@@ -16,19 +16,33 @@
 
 package de.dakror.common.libgdx.io;
 
-import java.io.*;
+import java.io.BufferedReader;
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutput;
-import java.lang.StringBuilder;
-import java.util.*;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import com.badlogic.gdx.Application.ApplicationType;
 import com.badlogic.gdx.Gdx;
-import com.badlogic.gdx.utils.*;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.ObjectMap;
 import com.badlogic.gdx.utils.Pool.Poolable;
+import com.badlogic.gdx.utils.Pools;
 
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
@@ -61,6 +75,12 @@ public class NBT {
     }
 
     static final TreeMap<Byte, TagType> reverseTags = new TreeMap<>();
+
+    public enum CompressionType {
+        Uncompressed,
+        LZ4,
+        GZIP
+    }
 
     public enum TagType {
         End(0, EndTag.class),
@@ -1423,17 +1443,19 @@ public class NBT {
         return tag;
     }
 
-    protected CompoundTag readFile(InputStream is, boolean compressed) throws IOException {
+    protected CompoundTag readFile(InputStream is, CompressionType compression) throws IOException {
         Tag.idCounter = 0;
         InputStream stream = is;
         is.mark(Integer.MAX_VALUE);
         try {
-            if (compressed) {
+            if (compression == CompressionType.LZ4) {
                 if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                     stream = new LZ4FrameInputStream(is);
                 else
                     stream = new LZ4FrameInputStream(is, IOUtils.getLZ4().safeDecompressor(),
                             IOUtils.getXXHash().hash32());
+            } else if (compression == CompressionType.GZIP) {
+                stream = new GZIPInputStream(is);
             }
 
             input = new DataInputStream(stream);
@@ -1444,7 +1466,7 @@ public class NBT {
             is.reset();
 
             // try gzip, maybe file format is old
-            if (compressed) {
+            if (compression == CompressionType.LZ4) {
                 stream = new GZIPInputStream(is);
             }
 
@@ -1538,14 +1560,16 @@ public class NBT {
         }
     }
 
-    protected void writeFile(OutputStream os, CompoundTag data, boolean compressed) throws IOException {
+    protected void writeFile(OutputStream os, CompoundTag data, CompressionType compression) throws IOException {
         Tag.idCounter = 0;
-        if (compressed) {
+        if (compression == CompressionType.LZ4) {
             if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                 os = new LZ4FrameOutputStream(os);
             else
                 os = new LZ4FrameOutputStream(os, BLOCKSIZE.SIZE_4MB, -1L, IOUtils.getLZ4().fastCompressor(),
                         IOUtils.getXXHash().hash32(), FLG.Bits.BLOCK_INDEPENDENCE);
+        } else if (compression == CompressionType.GZIP) {
+            os = new GZIPOutputStream(os);
         }
 
         output = new DataOutputStream(os);
@@ -1558,8 +1582,8 @@ public class NBT {
     //////////////////////////////////////////
     //////////////////////////////////////////
 
-    public static CompoundTag read(InputStream is, boolean compressed) throws IOException {
-        return nbt.readFile(is, compressed);
+    public static CompoundTag read(InputStream is, CompressionType compression) throws IOException {
+        return nbt.readFile(is, compression);
     }
 
     private static final Pattern textRegex = Pattern.compile("(?:([a-zA-Z]+)(?:\\(\"(\\w+)\"\\))?: ?(?:\\d+ entries of type ([a-zA-Z]+)|(.+)))|\\{|\\}");
@@ -1702,8 +1726,8 @@ public class NBT {
 
     }
 
-    public static void write(OutputStream os, CompoundTag data, boolean compressed) throws IOException {
-        nbt.writeFile(os, data, compressed);
+    public static void write(OutputStream os, CompoundTag data, CompressionType compression) throws IOException {
+        nbt.writeFile(os, data, compression);
     }
 
     //////////////////////////////////////////

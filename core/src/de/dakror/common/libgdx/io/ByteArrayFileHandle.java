@@ -16,7 +16,9 @@
 
 package de.dakror.common.libgdx.io;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import com.badlogic.gdx.files.FileHandleStream;
 import com.badlogic.gdx.utils.StreamUtils.OptimizedByteArrayOutputStream;

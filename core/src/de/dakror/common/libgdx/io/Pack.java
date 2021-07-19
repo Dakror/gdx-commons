@@ -16,8 +16,10 @@
 
 package de.dakror.common.libgdx.io;
 
-import com.badlogic.gdx.utils.*;
+import com.badlogic.gdx.utils.ObjectMap;
+import com.badlogic.gdx.utils.Pool;
 import com.badlogic.gdx.utils.Pool.Poolable;
+import com.badlogic.gdx.utils.Pools;
 
 /**
  * @author Maximilian Stark | Dakror
