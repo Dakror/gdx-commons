@@ -1263,6 +1263,11 @@ public class NBT {
             return this;
         }
 
+        public Builder add(Tag tag) {
+            current.add(tag);
+            return this;
+        }
+
         public Builder End() {
             current = current.parent;
             return this;
