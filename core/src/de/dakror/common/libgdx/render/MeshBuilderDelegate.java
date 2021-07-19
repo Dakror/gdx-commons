@@ -169,7 +169,7 @@ public class MeshBuilderDelegate implements SpriteRenderer {
     }
 
     @Override
-    public void add(float x, float y, float z, float originX, float originY, float width, float height, float scaleX, float scaleY, float rotation, int srcX, int srcY, int srcWidth, int srcHeight, boolean flipX, boolean flipY) {
+    public void add(float x, float y, float z, float originX, float originY, float width, float height, float scaleX, float scaleY, float rotation, float srcX, float srcY, float srcWidth, float srcHeight, boolean flipX, boolean flipY) {
         // bottom left and top right corner points relative to origin
         final float worldOriginX = x + originX;
         final float worldOriginY = y + originY;

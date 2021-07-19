@@ -40,9 +40,9 @@ public class SpriteBatchDelegate implements SpriteRenderer {
 
     @Override
     public void add(float x, float y, float z, float originX, float originY, float width, float height,
-            float scaleX, float scaleY, float rotation, int srcX, int srcY, int srcWidth, int srcHeight,
+            float scaleX, float scaleY, float rotation, float srcX, float srcY, float srcWidth, float srcHeight,
             boolean flipX, boolean flipY) {
-        batch.draw(atlas, x, y, originX, originY, width, height, scaleX, scaleY, rotation, srcX, srcY, srcWidth, srcHeight, flipX, flipY);
+        batch.draw(atlas, x, y, originX, originY, width, height, scaleX, scaleY, rotation, (int) srcX, (int) srcY, (int) srcWidth, (int) srcHeight, flipX, flipY);
     }
 
     @Override

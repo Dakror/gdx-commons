@@ -32,7 +32,7 @@ public interface SpriteRenderer extends Disposable {
     void add(float x, float y, float z, float width, float height, float u, float v, float u2, float v2);
 
     void add(float x, float y, float z, float originX, float originY, float width, float height, float scaleX,
-            float scaleY, float rotation, int srcX, int srcY, int srcWidth, int srcHeight, boolean flipX, boolean flipY);
+            float scaleY, float rotation, float srcX, float srcY, float srcWidth, float srcHeight, boolean flipX, boolean flipY);
 
     void flush();
     
