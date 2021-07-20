@@ -78,8 +78,8 @@ public class NBT {
 
     public enum CompressionType {
         Uncompressed,
-        LZ4,
-        GZIP
+        Fast,
+        Small
     }
 
     public enum TagType {
@@ -1448,13 +1448,13 @@ public class NBT {
         InputStream stream = is;
         is.mark(Integer.MAX_VALUE);
         try {
-            if (compression == CompressionType.LZ4) {
+            if (compression == CompressionType.Fast) {
                 if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                     stream = new LZ4FrameInputStream(is);
                 else
                     stream = new LZ4FrameInputStream(is, IOUtils.getLZ4().safeDecompressor(),
                             IOUtils.getXXHash().hash32());
-            } else if (compression == CompressionType.GZIP) {
+            } else if (compression == CompressionType.Small) {
                 stream = new GZIPInputStream(is);
             }
 
@@ -1462,11 +1462,12 @@ public class NBT {
             CompoundTag t = readTag(true, CompoundTag.class);
             return t;
         } catch (IOException e) {
+            e.printStackTrace();
             stream = is;
             is.reset();
 
             // try gzip, maybe file format is old
-            if (compression == CompressionType.LZ4) {
+            if (compression == CompressionType.Fast) {
                 stream = new GZIPInputStream(is);
             }
 
@@ -1562,19 +1563,20 @@ public class NBT {
 
     protected void writeFile(OutputStream os, CompoundTag data, CompressionType compression) throws IOException {
         Tag.idCounter = 0;
-        if (compression == CompressionType.LZ4) {
+        if (compression == CompressionType.Fast) {
             if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
                 os = new LZ4FrameOutputStream(os);
             else
                 os = new LZ4FrameOutputStream(os, BLOCKSIZE.SIZE_4MB, -1L, IOUtils.getLZ4().fastCompressor(),
                         IOUtils.getXXHash().hash32(), FLG.Bits.BLOCK_INDEPENDENCE);
-        } else if (compression == CompressionType.GZIP) {
+        } else if (compression == CompressionType.Small) {
             os = new GZIPOutputStream(os);
         }
 
         output = new DataOutputStream(os);
         writeTag(data, true);
         output = null;
+        os.flush();
         os.close();
         Tag.idCounter = 0;
     }
