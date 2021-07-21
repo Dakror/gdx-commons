@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -1308,9 +1309,16 @@ public class NBT {
     protected DataInput input;
     protected DataOutput output;
 
+    protected CompressionType compression;
+    protected ObjectMap<String, Integer> strToId = new ObjectMap<>();
+    protected ArrayList<String> idToStr = new ArrayList<>();
+    protected int idWidth;
+
     protected NBT() {}
 
     protected String readName() throws IOException {
+        if (compression == CompressionType.Fast)
+            ;
         StringTag tag = readTag(TagType.String);
         return tag.data;
     }
@@ -1443,10 +1451,13 @@ public class NBT {
         return tag;
     }
 
-    protected CompoundTag readFile(InputStream is, CompressionType compression) throws IOException {
+    protected CompoundTag readFile(InputStream is, CompressionType compression_) throws IOException {
         Tag.idCounter = 0;
         InputStream stream = is;
         is.mark(Integer.MAX_VALUE);
+        compression = compression_;
+        strToId.clear();
+        idToStr.clear();
         try {
             if (compression == CompressionType.Fast) {
                 if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
@@ -1459,6 +1470,13 @@ public class NBT {
             }
 
             input = new DataInputStream(stream);
+
+            if (compression == CompressionType.Small) {
+                // Read width of string ids
+                ByteTag t = readTag(true, ByteTag.class);
+                //                idType = reverseTags.get(t.data);
+            }
+
             CompoundTag t = readTag(true, CompoundTag.class);
             return t;
         } catch (IOException e) {
@@ -1487,8 +1505,16 @@ public class NBT {
         if (named) {
             output.writeByte(tag.type.value);
             if (tag.name != null) {
-                output.writeShort(tag.name.length());
-                output.write(tag.name.getBytes("UTF-8"));
+                if (compression == CompressionType.Small) {
+                    int id = strToId.get(tag.name);
+                    if (idWidth == 1) output.writeByte((byte) id);
+                    else if (idWidth == 2) output.writeShort((short) id);
+                    else if (idWidth == 4) output.writeInt(id);
+                    else throw new RuntimeException("invalid idWidth");
+                } else {
+                    output.writeShort(tag.name.length());
+                    output.write(tag.name.getBytes("UTF-8"));
+                }
             }
         }
         switch (tag.type) {
@@ -1561,7 +1587,10 @@ public class NBT {
         }
     }
 
-    protected void writeFile(OutputStream os, CompoundTag data, CompressionType compression) throws IOException {
+    protected void writeFile(OutputStream os, CompoundTag data, CompressionType compression_) throws IOException {
+        compression = compression_;
+        strToId.clear();
+        idToStr.clear();
         Tag.idCounter = 0;
         if (compression == CompressionType.Fast) {
             if (Gdx.app == null || Gdx.app.getType() == ApplicationType.Desktop)
@@ -1571,14 +1600,59 @@ public class NBT {
                         IOUtils.getXXHash().hash32(), FLG.Bits.BLOCK_INDEPENDENCE);
         } else if (compression == CompressionType.Small) {
             os = new GZIPOutputStream(os);
+            collectStrings(data);
         }
 
         output = new DataOutputStream(os);
+
+        if (compression == CompressionType.Small) {
+            // Write id width
+            int w = strToId.size;
+            idWidth = 1;
+            if (w > 255) idWidth = 2;
+            if (w > 65535) idWidth = 4;
+
+            // write dict
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < w; i++) {
+                sb.append(idToStr.get(i));
+                if (i < w - 1) sb.append('\0');
+            }
+            writeTag(new ByteArrayTag(null, sb.toString().getBytes()), false);
+        }
+
         writeTag(data, true);
         output = null;
         os.flush();
         os.close();
         Tag.idCounter = 0;
+    }
+
+    //////////////////////////////////////////
+    //////////////////////////////////////////
+
+    protected void collectStrings(CollectionTag tag) {
+        if (tag.name != null) {
+            if (!strToId.containsKey(tag.name)) {
+                int id = strToId.size;
+                strToId.put(tag.name, id);
+                idToStr.add(tag.name);
+            }
+        }
+
+        for (Tag t : tag.getData()) {
+            if (t.name != null) {
+                if (!strToId.containsKey(t.name)) {
+                    int id = strToId.size;
+                    strToId.put(t.name, id);
+                    idToStr.add(t.name);
+                }
+            }
+
+            if (t instanceof CollectionTag) {
+                collectStrings((CollectionTag) t);
+            }
+        }
     }
 
     //////////////////////////////////////////
