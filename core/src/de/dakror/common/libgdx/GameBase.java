@@ -190,10 +190,10 @@ public abstract class GameBase extends ApplicationAdapter {
 
     public void update() {
         double newTime = System.nanoTime() / 1_000_000_000.0;
-        double frameTime = newTime - currentTime;
+        double deltaTime = newTime - currentTime;
         currentTime = newTime;
 
-        float deltaTime = (float) Math.min(frameTime, updateRate);
+        //        float deltaTime = (float) Math.min(frameTime, updateRate);
 
         long t = System.nanoTime();
         synchronized (sceneStack) {
