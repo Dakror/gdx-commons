@@ -182,16 +182,16 @@ public abstract class GameBase extends ApplicationAdapter {
 
     @Override
     public void resume() {
+        currentTime = System.nanoTime() / 1_000_000_000.0;
         synchronized (sceneStack) {
             for (Scene scene : sceneStack)
                 scene.resume();
         }
-        currentTime = System.nanoTime();
     }
 
     public void update() {
         double newTime = System.nanoTime() / 1_000_000_000.0;
-        double deltaTime = newTime - currentTime;
+        double deltaTime = Math.min(newTime - currentTime, 1); // limit to 1 second of catch up time
         currentTime = newTime;
 
         //        float deltaTime = (float) Math.min(frameTime, updateRate);
