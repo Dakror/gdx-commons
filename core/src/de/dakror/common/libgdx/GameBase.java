@@ -186,6 +186,7 @@ public abstract class GameBase extends ApplicationAdapter {
             for (Scene scene : sceneStack)
                 scene.resume();
         }
+        currentTime = System.nanoTime();
     }
 
     public void update() {
