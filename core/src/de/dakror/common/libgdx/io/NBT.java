@@ -506,7 +506,7 @@ public class NBT {
          * #name to match compound name
          * [] to match index in list
          * > (no space) to enforce direct parentship between to filters, otherwise all elements in between possible
-         * 
+         * , to specify multiple filters on a single object
          * 
          * 
          * @param queryString
