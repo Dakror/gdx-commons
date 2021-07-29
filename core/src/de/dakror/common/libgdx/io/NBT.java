@@ -25,13 +25,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.GZIPInputStream;
@@ -74,7 +74,7 @@ public class NBT {
         }
     }
 
-    static final TreeMap<Byte, TagType> reverseTags = new TreeMap<>();
+    static final TagType[] reverseTags = new TagType[256];
 
     public enum CompressionType {
         Uncompressed,
@@ -83,30 +83,32 @@ public class NBT {
     }
 
     public enum TagType {
-        End(0, EndTag.class),
-        Byte(1, ByteTag.class),
-        Short(2, ShortTag.class),
-        Int(3, IntTag.class),
-        Long(4, LongTag.class),
-        Float(5, FloatTag.class),
-        Double(6, DoubleTag.class),
-        ByteArray(7, ByteArrayTag.class),
-        String(8, StringTag.class),
-        List(9, ListTag.class),
-        Compound(10, CompoundTag.class),
-        IntArray(11, IntArrayTag.class),
-        LongArray(12, LongArrayTag.class),
-        ShortArray(13, ShortArrayTag.class),
-        FloatArray(14, FloatArrayTag.class),;
+        End(0, EndTag.class, 0),
+        Byte(1, ByteTag.class, 1),
+        Short(2, ShortTag.class, 2),
+        Int(3, IntTag.class, 4),
+        Long(4, LongTag.class, 8),
+        Float(5, FloatTag.class, 4),
+        Double(6, DoubleTag.class, 8),
+        ByteArray(7, ByteArrayTag.class, 1),
+        String(8, StringTag.class, 1),
+        List(9, ListTag.class, 0),
+        Compound(10, CompoundTag.class, 0),
+        IntArray(11, IntArrayTag.class, 4),
+        LongArray(12, LongArrayTag.class, 8),
+        ShortArray(13, ShortArrayTag.class, 2),
+        FloatArray(14, FloatArrayTag.class, 4);
 
         public byte value;
         public Class<? extends Tag> clazz;
+        public final int width;
 
-        TagType(int val, Class<? extends Tag> clazz) {
+        TagType(int val, Class<? extends Tag> clazz, int width) {
             value = (byte) val;
             this.clazz = clazz;
+            this.width = width;
 
-            reverseTags.put(value, this);
+            reverseTags[value] = this;
         }
     }
 
@@ -1437,10 +1439,175 @@ public class NBT {
         String name = null;
         if (named && type != 0) name = readName();
 
-        T tag = readPayload(reverseTags.get(type), expected);
+        T tag = readPayload(reverseTags[type], expected);
 
         tag.name = name;
         return tag;
+    }
+
+    public static class LazyTagContainer {
+        public static class RawTag implements Poolable {
+            int position;
+            TagType type;
+            int size;
+
+            @Override
+            public void reset() {
+                position = 0;
+                size = 0;
+                type = null;
+            }
+        }
+
+        public static class RawCompoundTag extends RawTag {
+            ObjectMap<String, RawTag> children = new ObjectMap<>();
+
+            @Override
+            public void reset() {
+                children.clear();
+            }
+        }
+
+        public static class RawListTag extends RawTag {
+            /**
+             * offsets for basic types, tags for compoung & list
+             */
+            Object[] children;
+            TagType childrenType;
+
+            @Override
+            public void reset() {
+                children = null;
+                childrenType = null;
+            }
+        }
+
+        ByteBuffer buf;
+
+        RawCompoundTag root;
+        String rootName;
+
+        public LazyTagContainer(byte[] data) throws IOException {
+            buf = ByteBuffer.wrap(data);
+
+            buf.position(0);
+            TagType type = reverseTags[buf.get()];
+            if (type == null || type != TagType.Compound) throw new IOException("Unknown Tag Type: " + type);
+
+            short len = buf.getShort();
+            byte[] str = new byte[len];
+            buf.get(str);
+            rootName = new String(str, "UTF-8");
+            root = Pools.obtain(RawCompoundTag.class);
+            root.position = 0;
+            while (buf.position() < buf.capacity()) {
+                len = buf.getShort();
+                str = new byte[len];
+                buf.get(str);
+                String name = new String(str, "UTF-8");
+                type = reverseTags[buf.get()];
+                if (type == null) throw new IOException("Unknown Tag Type: " + type);
+
+                switch (type) {
+                    case Byte:
+                    case Short:
+                    case Int:
+                    case Long:
+                    case Float:
+                    case Double: {
+                        RawTag tag = Pools.obtain(RawTag.class);
+                        tag.position = buf.position();
+                        tag.type = type;
+                        buf.position(buf.position() + type.width);
+                        root.children.put(name, tag);
+                        break;
+                    }
+                    case String: {
+                        RawTag tag = Pools.obtain(RawTag.class);
+                        tag.position = buf.position();
+                        tag.type = type;
+                        tag.size = buf.getShort();
+                        root.children.put(name, tag);
+                        buf.position(buf.position() + tag.size);
+                        break;
+                    }
+                    case ByteArray:
+                    case ShortArray:
+                    case IntArray:
+                    case LongArray:
+                    case FloatArray: {
+                        RawTag tag = Pools.obtain(RawTag.class);
+                        tag.position = buf.position();
+                        tag.type = type;
+                        tag.size = buf.getInt();
+                        buf.position(buf.position() + tag.size * type.width);
+                        break;
+                    }
+                    case Compound:
+                        // TODO 
+                        break;
+                    case List: {
+                        RawListTag tag = Pools.obtain(RawListTag.class);
+                        tag.childrenType = reverseTags[buf.get()];
+
+                        int pos = buf.position();
+                        switch (tag.childrenType) {
+                            case Byte:
+                            case Short:
+                            case Int:
+                            case Float:
+                            case Long:
+                            case Double:
+                                buf.position(pos + tag.children.length * tag.childrenType.width);
+                                break;
+                            case ByteArray:
+                            case ShortArray:
+                            case IntArray:
+                            case FloatArray:
+                            case LongArray:
+                                tag.children = new Object[buf.getInt()];
+                                for (int i = 0; i < tag.children.length; i++) {
+                                    int elems = buf.getInt();
+                                    pos += elems * tag.childrenType.width;
+                                    buf.position(pos);
+                                    tag.size = elems;
+                                    tag.children[i] = pos;
+                                }
+                                break;
+                            case String:
+                                tag.children = new Object[buf.getInt()];
+                                for (int i = 0; i < tag.children.length; i++) {
+                                    int elems = buf.getShort();
+                                    pos += elems;
+                                    buf.position(pos);
+                                    tag.children[i] = pos;
+                                }
+                                break;
+                            case Compound: {
+                                tag.children = new Object[buf.getInt()];
+                                // TODO 
+                                break;
+                            }
+                            case List: {
+                                tag.children = new Object[buf.getInt()];
+                                // TODO 
+                                break;
+                            }
+                            case End:
+                            default:
+                                break;
+                        }
+
+                        root.children.put(name, tag);
+                        break;
+                    }
+                    case End:
+                    default:
+                        break;
+                }
+            }
+        }
+
     }
 
     protected CompoundTag readFile(InputStream is, CompressionType compression) throws IOException {
