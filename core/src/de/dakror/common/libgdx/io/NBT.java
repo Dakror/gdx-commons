@@ -1450,12 +1450,14 @@ public class NBT {
             int position;
             TagType type;
             int size;
+            LazyTagContainer container;
 
             @Override
             public void reset() {
                 position = 0;
                 size = 0;
                 type = null;
+                container = null;
             }
         }
 
@@ -1470,7 +1472,7 @@ public class NBT {
 
         public static class RawListTag extends RawTag {
             /**
-             * offsets for basic types, tags for compoung & list
+             * offsets for basic types, tags for compound & list
              */
             Object[] children;
             TagType childrenType;
@@ -1484,8 +1486,8 @@ public class NBT {
 
         ByteBuffer buf;
 
-        RawCompoundTag root;
-        String rootName;
+        public final RawCompoundTag root;
+        public final String rootName;
 
         public LazyTagContainer(byte[] data) throws IOException {
             buf = ByteBuffer.wrap(data);
@@ -1498,14 +1500,19 @@ public class NBT {
             byte[] str = new byte[len];
             buf.get(str);
             rootName = new String(str, "UTF-8");
-            root = Pools.obtain(RawCompoundTag.class);
-            root.position = 0;
+            root = readCompound();
+        }
+
+        private RawCompoundTag readCompound() throws IOException {
+            RawCompoundTag compound = Pools.obtain(RawCompoundTag.class);
+            compound.position = buf.position();
+            compound.container = this;
             while (buf.position() < buf.capacity()) {
-                len = buf.getShort();
-                str = new byte[len];
+                short len = buf.getShort();
+                byte[] str = new byte[len];
                 buf.get(str);
                 String name = new String(str, "UTF-8");
-                type = reverseTags[buf.get()];
+                TagType type = reverseTags[buf.get()];
                 if (type == null) throw new IOException("Unknown Tag Type: " + type);
 
                 switch (type) {
@@ -1516,6 +1523,7 @@ public class NBT {
                     case Float:
                     case Double: {
                         RawTag tag = Pools.obtain(RawTag.class);
+                        tag.container = this;
                         tag.position = buf.position();
                         tag.type = type;
                         buf.position(buf.position() + type.width);
@@ -1524,6 +1532,7 @@ public class NBT {
                     }
                     case String: {
                         RawTag tag = Pools.obtain(RawTag.class);
+                        tag.container = this;
                         tag.position = buf.position();
                         tag.type = type;
                         tag.size = buf.getShort();
@@ -1537,6 +1546,7 @@ public class NBT {
                     case LongArray:
                     case FloatArray: {
                         RawTag tag = Pools.obtain(RawTag.class);
+                        tag.container = this;
                         tag.position = buf.position();
                         tag.type = type;
                         tag.size = buf.getInt();
@@ -1544,68 +1554,82 @@ public class NBT {
                         break;
                     }
                     case Compound:
-                        // TODO 
+                        root.children.put(name, readCompound());
                         break;
                     case List: {
-                        RawListTag tag = Pools.obtain(RawListTag.class);
-                        tag.childrenType = reverseTags[buf.get()];
-
-                        int pos = buf.position();
-                        switch (tag.childrenType) {
-                            case Byte:
-                            case Short:
-                            case Int:
-                            case Float:
-                            case Long:
-                            case Double:
-                                buf.position(pos + tag.children.length * tag.childrenType.width);
-                                break;
-                            case ByteArray:
-                            case ShortArray:
-                            case IntArray:
-                            case FloatArray:
-                            case LongArray:
-                                tag.children = new Object[buf.getInt()];
-                                for (int i = 0; i < tag.children.length; i++) {
-                                    int elems = buf.getInt();
-                                    pos += elems * tag.childrenType.width;
-                                    buf.position(pos);
-                                    tag.size = elems;
-                                    tag.children[i] = pos;
-                                }
-                                break;
-                            case String:
-                                tag.children = new Object[buf.getInt()];
-                                for (int i = 0; i < tag.children.length; i++) {
-                                    int elems = buf.getShort();
-                                    pos += elems;
-                                    buf.position(pos);
-                                    tag.children[i] = pos;
-                                }
-                                break;
-                            case Compound: {
-                                tag.children = new Object[buf.getInt()];
-                                // TODO 
-                                break;
-                            }
-                            case List: {
-                                tag.children = new Object[buf.getInt()];
-                                // TODO 
-                                break;
-                            }
-                            case End:
-                            default:
-                                break;
-                        }
-
-                        root.children.put(name, tag);
+                        root.children.put(name, readList());
                         break;
                     }
                     case End:
                     default:
                         break;
                 }
+
+                // end tag
+                if (buf.get(buf.position()) == 0) break;
             }
+
+            return compound;
+        }
+
+        private RawListTag readList() throws IOException {
+            RawListTag tag = Pools.obtain(RawListTag.class);
+            tag.container = this;
+            tag.childrenType = reverseTags[buf.get()];
+
+            int pos = buf.position();
+            switch (tag.childrenType) {
+                case Byte:
+                case Short:
+                case Int:
+                case Float:
+                case Long:
+                case Double:
+                    buf.position(pos + tag.children.length * tag.childrenType.width);
+                    break;
+                case ByteArray:
+                case ShortArray:
+                case IntArray:
+                case FloatArray:
+                case LongArray:
+                    tag.children = new Object[buf.getInt()];
+                    for (int i = 0; i < tag.children.length; i++) {
+                        int elems = buf.getInt();
+                        pos += elems * tag.childrenType.width;
+                        buf.position(pos);
+                        tag.size = elems;
+                        tag.children[i] = pos;
+                    }
+                    break;
+                case String:
+                    tag.children = new Object[buf.getInt()];
+                    for (int i = 0; i < tag.children.length; i++) {
+                        int elems = buf.getShort();
+                        pos += elems;
+                        buf.position(pos);
+                        tag.children[i] = pos;
+                    }
+                    break;
+                case Compound: {
+                    tag.children = new Object[buf.getInt()];
+                    for (int i = 0; i < tag.children.length; i++) {
+                        tag.children[i] = readCompound();
+                    }
+                    break;
+                }
+                case List: {
+                    tag.children = new Object[buf.getInt()];
+                    for (int i = 0; i < tag.children.length; i++) {
+                        tag.children[i] = readList();
+                    }
+                    break;
+                }
+                case End:
+                default:
+                    break;
+            }
+
+            return tag;
         }
 
     }
