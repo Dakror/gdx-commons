@@ -448,6 +448,7 @@ public class DepthSpriter implements SpriteRenderer {
         drawing = true;
     }
 
+    @Override
     public void flush() {
         boolean caching = this.caching;
         if (caching) {

@@ -17,18 +17,18 @@
 package de.dakror.common.libgdx.render;
 
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.Batch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.graphics.glutils.ShaderProgram;
 
 /**
  * @author Maximilian Stark | Dakror
  */
-public class SpriteBatchDelegate implements SpriteRenderer {
-    private SpriteBatch batch;
+public class BatchDelegate implements SpriteRenderer {
+    private Batch batch;
     private Texture atlas;
 
-    public SpriteBatchDelegate(Texture atlas, SpriteBatch batch) {
+    public BatchDelegate(Texture atlas, Batch batch) {
         this.atlas = atlas;
         this.batch = batch;
     }
@@ -61,7 +61,7 @@ public class SpriteBatchDelegate implements SpriteRenderer {
         batch.flush();
     }
 
-    public SpriteBatch getBatch() {
+    public Batch getBatch() {
         return batch;
     }
 
