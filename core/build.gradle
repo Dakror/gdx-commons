@@ -9,6 +9,8 @@ dependencies {
 	compile "com.badlogicgames.gdx:gdx:$gdxVersion"
 	compile "com.github.czyzby:gdx-lml:1.9.1.9.6"
 
+	implementation 'org.javassist:javassist:3.28.0-GA'
+	implementation 'org.scannotation:scannotation:1.0.3'
 	implementation 'org.lz4:lz4-java:1.5.0'
 }
 
