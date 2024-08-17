@@ -25,6 +25,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputMultiplexer;
+import com.badlogic.gdx.graphics.Cursor;
 import com.badlogic.gdx.math.WindowedMean;
 
 import de.dakror.common.libgdx.ui.Scene;
@@ -66,7 +67,7 @@ public abstract class GameBase extends ApplicationAdapter {
         if (Gdx.app.getType() != ApplicationType.Desktop) return;
 
         if (mode == WindowMode.Borderless) {
-            Gdx.graphics.setUndecorated(true);
+            Gdx.graphics.setUndecorated(false);
             Gdx.graphics.setWindowedMode(Gdx.graphics.getDisplayMode().width, Gdx.graphics.getDisplayMode().height);
             Gdx.graphics.setResizable(true);
         } else if (mode == WindowMode.Fullscreen) {
