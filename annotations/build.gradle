@@ -1,15 +1,15 @@
-apply plugin: "java"
+apply plugin: "java-library"
 
-sourceCompatibility = 1.7
+sourceCompatibility = 1.8
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 sourceSets.main.java.srcDirs = [ "src/" ]
 
 dependencies {
 	if(projectDir.getParentFile().equals(rootDir)) {
-    	compile project(':core')
+        implementation project(':core')
     } else {
-    	compile project(':'+projectDir.getParentFile().name+':core')
+    	implementation project(':'+projectDir.getParentFile().name+':core')
     }
 }
 
