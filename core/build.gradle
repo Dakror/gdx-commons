@@ -9,9 +9,11 @@ dependencies {
     api "com.badlogicgames.gdx:gdx:$gdxVersion"
     api "com.github.czyzby:gdx-lml:1.9.1.9.6"
 
-	implementation 'org.lz4:lz4-java:1.5.0'
+	api 'org.lz4:lz4-java:1.5.0'
 }
-
+compileJava {
+    options.release = 8
+}
 eclipse.project {
     name = libName + "-core"
 }
