@@ -26,6 +26,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.InputMultiplexer;
 import com.badlogic.gdx.graphics.Cursor;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.WindowedMean;
 
 import de.dakror.common.libgdx.ui.Scene;
@@ -54,20 +57,26 @@ public abstract class GameBase extends ApplicationAdapter {
 
     WindowMode mode;
 
+    SpriteBatch mouseBatch;
+    public TextureRegion mouseTex;
+
     protected float updateRate = 1 / 60f;
 
     double currentTime;
+    public boolean desktop;
 
-    public GameBase(WindowMode mode, PlatformInterface pi) {
+    public GameBase(WindowMode mode, boolean desktop, PlatformInterface pi) {
         this.pi = pi;
+        this.desktop = desktop;
         this.mode = mode;
     }
 
     protected void setWindowMode(WindowMode mode) {
         if (Gdx.app.getType() != ApplicationType.Desktop) return;
 
+        Gdx.input.setCursorCatched(false);
         if (mode == WindowMode.Borderless) {
-            Gdx.graphics.setUndecorated(false);
+            Gdx.graphics.setUndecorated(true);
             Gdx.graphics.setWindowedMode(Gdx.graphics.getDisplayMode().width, Gdx.graphics.getDisplayMode().height);
             Gdx.graphics.setResizable(true);
         } else if (mode == WindowMode.Fullscreen) {
@@ -107,6 +116,7 @@ public abstract class GameBase extends ApplicationAdapter {
         Gdx.input.setInputProcessor(input);
         currentTime = System.nanoTime() / 1_000_000_000.0;
 
+        mouseBatch = new SpriteBatch(1);
     }
 
     public Scene getScene() {
@@ -253,6 +263,12 @@ public abstract class GameBase extends ApplicationAdapter {
                 Gdx.gl.glClear(GL_COLOR_BUFFER_BIT);
                 for (Scene scene : sceneStack)
                     scene.draw();
+
+                if (desktop) {
+                    mouseBatch.begin();
+                    mouseBatch.draw(mouseTex, Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY() - 24, 24, 24);
+                    mouseBatch.end();
+                }
                 frameTimeWindow.addValue(System.nanoTime() - t);
             }
         } catch (Exception e) {
